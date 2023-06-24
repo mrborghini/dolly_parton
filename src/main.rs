@@ -1,4 +1,6 @@
 use dotenv::dotenv;
+use mysql::prelude::*;
+use mysql::*;
 use rand::Rng;
 use serenity::async_trait;
 use serenity::model::channel::Message;
@@ -11,6 +13,86 @@ fn random_number(startrange: usize, maxrange: usize) -> usize {
     let mut rng = rand::thread_rng();
     let num = rng.gen_range(RangeInclusive::new(startrange, maxrange));
     return num;
+}
+
+fn createdb(
+    database_name: &str,
+    username: &str,
+    password: &str,
+    hostname: &str,
+    port: u16,
+) -> Result<(), mysql::Error> {
+    let opts = Opts::from_url(&format!(
+        "mysql://{}:{}@{}:{}/",
+        username, password, hostname, port
+    ))?;
+
+    let pool = Pool::new(opts)?;
+
+    let mut conn = pool.get_conn()?;
+
+    conn.query_drop(&format!("CREATE DATABASE IF NOT EXISTS {}", database_name))?;
+
+    conn.query_drop(&format!("USE {}", database_name))?;
+
+    conn.query_drop(
+        r#"
+        CREATE TABLE IF NOT EXISTS social_credits (
+            id int PRIMARY KEY AUTO_INCREMENT,
+            user varchar(255) NOT NULL,
+            credits int
+        )
+    "#,
+    )?;
+
+    Ok(())
+}
+
+fn putindb(user: &str, credits: u16) -> Result<(), mysql::Error> {
+    let database_name = "dolly_parton";
+    let username = env::var("SQL_USERNAME").expect("Expected a SQL_USERNAME in the environment");
+    let password = env::var("SQL_PASSWORD").expect("Expected a SQL_PASSWORD in the environment");
+    let hostname = env::var("HOSTNAME").expect("Expected a HOSTNAME in the environment");
+    let port = 3306;
+
+    let opts = Opts::from_url(&format!(
+        "mysql://{}:{}@{}:{}/{}",
+        username, password, hostname, port, database_name
+    ))?;
+
+    let pool = Pool::new(opts)?;
+    let mut conn = pool.get_conn()?;
+
+    let stmt = conn.prep("INSERT INTO social_credits (user, credits) VALUES (?, ?)")?;
+    conn.exec_drop(&stmt, (user, credits))?;
+
+    Ok(())
+}
+
+fn getuserinfo(user: &str) -> Result<Option<(String, i32)>, mysql::Error> {
+    let database_name = "dolly_parton";
+    let username = env::var("SQL_USERNAME").expect("Expected a SQL_USERNAME in the environment");
+    let password = env::var("SQL_PASSWORD").expect("Expected a SQL_PASSWORD in the environment");
+    let hostname = "localhost";
+    let port = 3306;
+
+    let opts = Opts::from_url(&format!(
+        "mysql://{}:{}@{}:{}/{}",
+        username, password, hostname, port, database_name
+    ))?;
+
+    let pool = Pool::new(opts)?;
+    let mut conn = pool.get_conn()?;
+
+    let stmt = conn.prep("SELECT user, credits FROM social_credits WHERE user = ?")?;
+    let mut rows = conn.exec_iter(&stmt, (user,))?;
+
+    if let Some(row) = rows.next() {
+        let (username, credits) = from_row::<(String, i32)>(row?);
+        Ok(Some((username, credits)))
+    } else {
+        Ok(None)
+    }
 }
 
 struct Handler;
@@ -32,6 +114,7 @@ impl EventHandler for Handler {
                     println!("Error sending message: {:?}", why);
                 }
             }
+
             "!cal" => {
                 if splitcommand[1] == "yes" {
                     if let Err(why) = msg.channel_id.say(&ctx.http, "Yes!").await {
@@ -46,6 +129,44 @@ impl EventHandler for Handler {
                 if splitcommand[1] == "maybe" {
                     if let Err(why) = msg.channel_id.say(&ctx.http, ":thinking:").await {
                         println!("Error sending message: {:?}", why);
+                    }
+                }
+            }
+
+            "!socialcredits" => {
+                let user_id: &u64 = msg.author.id.as_u64();
+                let user_id_string: String = format!("<@{}>", user_id);
+                match getuserinfo(&user_id_string) {
+                    Ok(Some((username, credits))) => {
+                        // Do something with the retrieved data
+                        if let Err(why) = msg
+                            .channel_id
+                            .say(
+                                &ctx.http,
+                                format!(
+                                    "{} You currently have: {} social credits! :money_mouth:",
+                                    username, credits
+                                ),
+                            )
+                            .await
+                        {
+                            println!("Error sending message: {:?}", why);
+                        }
+                    }
+                    Ok(None) => {
+                        println!("User not found");
+                        let adduser = putindb(&user_id_string, 0);
+
+                        match adduser {
+                            Ok(_) => println!("Added {} to database", user_id_string),
+                            Err(err) => eprintln!("Error creating testuser: {}", err),
+                        }
+                        if let Err(why) = msg.channel_id.say(&ctx.http, format!("{} Looks like you're not on my database yet... But luckily for you I just added you on my database :wink:. Just do !socialcredits again to see your social credits :)", user_id_string)).await {
+                            println!("Error sending message: {:?}", why);
+                        }
+                    }
+                    Err(err) => {
+                        eprintln!("Error retrieving user info: {}", err);
                     }
                 }
             }
@@ -171,6 +292,19 @@ impl EventHandler for Handler {
 async fn main() {
     println!("WAKE UP!");
     dotenv().ok();
+
+    let database_name = "dolly_parton";
+    let username = env::var("SQL_USERNAME").expect("Expected a SQL_USERNAME in the environment");
+    let password = env::var("SQL_PASSWORD").expect("Expected a SQL_PASSWORD in the environment");
+    let hostname = env::var("HOSTNAME").expect("Expected a HOSTNAME in the environment");
+    let port = 3306;
+
+    let result = createdb(&database_name, &username, &password, &hostname, port);
+
+    match result {
+        Ok(_) => println!("Waking up brain"),
+        Err(err) => eprintln!("Error creating the database: {}", err),
+    }
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
