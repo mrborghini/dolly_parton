@@ -8,6 +8,7 @@ use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use std::env;
 use std::ops::RangeInclusive;
+use std::process;
 
 fn random_number(startrange: usize, maxrange: usize) -> usize {
     let mut rng = rand::thread_rng();
@@ -40,7 +41,9 @@ fn createdb(
         CREATE TABLE IF NOT EXISTS social_credits (
             id int PRIMARY KEY AUTO_INCREMENT,
             user varchar(255) NOT NULL,
-            credits int
+            credits int,
+            job varchar(255),
+            salary int
         )
     "#,
     )?;
@@ -105,6 +108,27 @@ impl EventHandler for Handler {
         let splitcommand: Vec<&str> = msg.content.split_whitespace().collect();
 
         match splitcommand[0] {
+            "!dollyhelp" => {
+                let commands = vec![
+                    "!dolly",
+                    "!cal",
+                    "!cal yes",
+                    "!cal no",
+                    "!cal maybe",
+                    "!socialcredits",
+                    "!rage",
+                    "!compliment",
+                    "!compliment @user",
+                    "!fuckyoudolly",
+                    "!gosleep",
+                    "!silly",
+                    "!valgun",
+                ];
+                let response = format!("**Commands:**\n{}", commands.join("\n"));
+                if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
+                    println!("Error sending message: {:?}", why);
+                }
+            }
             "!dolly" => {
                 if let Err(why) = msg
                     .channel_id
@@ -116,18 +140,24 @@ impl EventHandler for Handler {
             }
 
             "!cal" => {
-                if splitcommand[1] == "yes" {
-                    if let Err(why) = msg.channel_id.say(&ctx.http, "Yes!").await {
-                        println!("Error sending message: {:?}", why);
+                if splitcommand.len() > 1 {
+                    if splitcommand[1] == "yes" {
+                        if let Err(why) = msg.channel_id.say(&ctx.http, "Yes!").await {
+                            println!("Error sending message: {:?}", why);
+                        }
                     }
-                }
-                if splitcommand[1] == "no" {
-                    if let Err(why) = msg.channel_id.say(&ctx.http, "NO!").await {
-                        println!("Error sending message: {:?}", why);
+                    if splitcommand[1] == "no" {
+                        if let Err(why) = msg.channel_id.say(&ctx.http, "NO!").await {
+                            println!("Error sending message: {:?}", why);
+                        }
                     }
-                }
-                if splitcommand[1] == "maybe" {
-                    if let Err(why) = msg.channel_id.say(&ctx.http, ":thinking:").await {
+                    if splitcommand[1] == "maybe" {
+                        if let Err(why) = msg.channel_id.say(&ctx.http, ":thinking:").await {
+                            println!("Error sending message: {:?}", why);
+                        }
+                    }
+                } else {
+                    if let Err(why) = msg.channel_id.say(&ctx.http, "Yes, NO!").await {
                         println!("Error sending message: {:?}", why);
                     }
                 }
@@ -197,6 +227,12 @@ impl EventHandler for Handler {
                 if let Err(why) = msg.channel_id.say(&ctx.http, ":rage:").await {
                     println!("Error sending message: {:?}", why);
                 }
+            }
+            "!quit" => {
+                if let Err(why) = msg.channel_id.say(&ctx.http, "Goodbye!").await {
+                    println!("Error sending message: {:?}", why);
+                }
+                process::exit(0);
             }
 
             "!compliment" => {
@@ -274,7 +310,7 @@ impl EventHandler for Handler {
             "!gosleep" => {
                 if let Err(why) = msg
                     .channel_id
-                    .say(&ctx.http, "<@446305232365027328> GO TO SLEEP")
+                    .say(&ctx.http, "<@446305232365027328> GO TO SLEEP, but the alarm is gone so I don't tinnitus")
                     .await
                 {
                     println!("Error sending message: {:?}", why);
