@@ -318,6 +318,16 @@ impl EventHandler for Handler {
             }
             _ => {}
         }
+    
+        match msg.content.to_lowercase().replace(&['(', ')', '?', '!', ',', '\"', '.', ';', ':', '\''][..], "").as_str() {
+            "morning" | "gm" | "guten morgen" | "good morning" | "goodmorning" | "good morning everyone" => {
+                    if let Err(why) = msg.channel_id.say(&ctx.http, format!("Hi {} I hope you have a wonderful morning :)", msg.author)).await {
+                        println!("Error sending message: {:?}", why);
+                    }
+            }
+            _ => {}
+        }
+
     }
     async fn ready(&self, _: Context, ready: Ready) {
         println!("{} HAS AWAKENEND!", ready.user.name);
