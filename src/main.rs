@@ -328,12 +328,36 @@ impl EventHandler for Handler {
             )
             .as_str()
         {
-            "morning" | "gm" | "gutenmorgen" | "goodmorning" | "goodmorningeveryone" | "goodmornin" => {
+            "morning"
+            | "gm"
+            | "gutenmorgen"
+            | "goodmorning"
+            | "goodmorningeveryone"
+            | "goodmornin"
+            | "buenosdias"
+            | "goedemorgen"
+            | "buongiorno" => {
+                let morningmessages = [
+                    format!("Good morning, {}! May your day be filled with joy and success.", msg.author),
+                    format!("Rise and shine, {}! It's a brand new day.", msg.author),
+                    format!("Hey {}! Hope you had a restful night and are ready to conquer the day!", msg.author),
+                    format!("Hello there, {}! Wishing you a fantastic morning and a productive day ahead.", msg.author),
+                    format!("Greetings, {}! Let the morning sun energize you for the challenges ahead.", msg.author),
+                    format!("Good morning, {}! Remember to take some time for yourself today.", msg.author),
+                    format!("Morning, {}! Embrace the opportunities this day brings and make the most of them.", msg.author),
+                    format!("Good morning sleepy {}!", msg.author),
+                    format!("Hi {} I hope you have a wonderful morning :)", msg.author),
+                    format!("Good morning {}! It's been a year {} I've really really missed you.", msg.author, msg.author),
+                    ];
+
                 if let Err(why) = msg
                     .channel_id
                     .say(
                         &ctx.http,
-                        format!("Hi {} I hope you have a wonderful morning :)", msg.author),
+                        format!(
+                            "{}",
+                            morningmessages[random_number(0, morningmessages.len() - 1)]
+                        ),
                     )
                     .await
                 {
