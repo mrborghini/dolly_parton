@@ -107,7 +107,8 @@ impl EventHandler for Handler {
 
         let splitcommand: Vec<&str> = msg.content.split_whitespace().collect();
 
-        match splitcommand[0] {
+        if splitcommand.len() > 0 {
+            match splitcommand[0] {
             "!dollyhelp" => {
                 let commands = vec![
                     "!dolly",
@@ -165,8 +166,41 @@ impl EventHandler for Handler {
             }
 
             "!rizz" => {
-                if let Err(why) = msg.channel_id.say(&ctx.http, format!("{} rizz is: {}%", msg.author, random_number(0, 101))).await {
-                    println!("Error sending message: {:?}", why);
+                if format!("{}", msg.author).as_str() == "<@1019339320731119626>" {
+                    if let Err(why) = msg
+                        .channel_id
+                        .say(
+                            &ctx.http,
+                            format!("{} rizz has: 0%", msg.author),
+                        )
+                        .await
+                    {
+                        println!("Error sending message: {:?}", why);
+                    }
+                }
+                else if format!("{}", msg.author).as_str() == "<@507705534917378050>" {
+                    if let Err(why) = msg
+                        .channel_id
+                        .say(
+                            &ctx.http,
+                            format!("{} rizz has: 100%", msg.author),
+                        )
+                        .await
+                    {
+                        println!("Error sending message: {:?}", why);
+                    }
+                }
+                else {
+                    if let Err(why) = msg
+                        .channel_id
+                        .say(
+                            &ctx.http,
+                            format!("{} rizz has: {}%", msg.author, random_number(0, 101)),
+                        )
+                        .await
+                    {
+                        println!("Error sending message: {:?}", why);
+                    }
                 }
             }
 
@@ -325,7 +359,7 @@ impl EventHandler for Handler {
             }
             _ => {}
         }
-
+        }
         match msg
             .content
             .to_lowercase()
