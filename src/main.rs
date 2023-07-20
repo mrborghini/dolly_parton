@@ -123,6 +123,7 @@ impl EventHandler for Handler {
                     "!gosleep",
                     "!silly",
                     "!valgun",
+                    "!rizz",
                 ];
                 let response = format!("**Commands:**\n{}", commands.join("\n"));
                 if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
@@ -160,6 +161,12 @@ impl EventHandler for Handler {
                     if let Err(why) = msg.channel_id.say(&ctx.http, "Yes, NO!").await {
                         println!("Error sending message: {:?}", why);
                     }
+                }
+            }
+
+            "!rizz" => {
+                if let Err(why) = msg.channel_id.say(&ctx.http, format!("{} rizz is: {}%", msg.author, random_number(0, 101))).await {
+                    println!("Error sending message: {:?}", why);
                 }
             }
 
