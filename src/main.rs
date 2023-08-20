@@ -9,6 +9,7 @@ use serenity::prelude::*;
 use std::env;
 use std::ops::RangeInclusive;
 use std::process;
+use serde::Deserialize;
 
 fn random_number(startrange: usize, maxrange: usize) -> usize {
     let mut rng = rand::thread_rng();
@@ -25,6 +26,25 @@ fn format_agents(agents: &[&str]) -> String {
     }
 
     formatted_agents
+}
+
+#[derive(Debug, Deserialize)]
+struct ReceivedQuote {
+content: String,
+author: String,
+}
+
+async fn quote() -> Result<String, reqwest::Error> {
+    let resp: ReceivedQuote = reqwest::Client::new()
+        .get("https://api.quotable.io/random")
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    let quote = format!("{} --{}", resp.content, resp.author);
+
+    Ok(quote)
 }
 
 fn createdb(
@@ -121,7 +141,7 @@ impl EventHandler for Handler {
         if splitcommand.len() > 0 {
             match splitcommand[0] {
             "!dollyhelp" => {
-                let commands = vec![
+                let mut commands = vec![
                     "!dolly",
                     "!cal",
                     "!cal yes",
@@ -137,7 +157,9 @@ impl EventHandler for Handler {
                     "!valgun",
                     "!valagents",
                     "!rizz",
+                    "!quote",
                 ];
+                commands.sort();
                 let response = format!("**Commands:**\n{}", commands.join("\n"));
                 if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
                     println!("Error sending message: {:?}", why);
@@ -411,6 +433,18 @@ impl EventHandler for Handler {
                     println!("Error sending message: {:?}", why);
                 }
             }
+           "!quote" => {
+            match quote().await {
+                Ok(quote) =>  if let Err(why) = msg
+                .channel_id
+                .say(&ctx.http, format!("```{}```", quote))
+                .await
+            {
+                println!("Error sending message: {:?}", why);
+            },
+                Err(err) => eprintln!("Error: {}", err),
+            }
+           }
             _ => {}
         }
         }
@@ -471,7 +505,6 @@ impl EventHandler for Handler {
 async fn main() {
     println!("WAKE UP!");
     dotenv().ok();
-
     let database_name = "dolly_parton";
     let username = env::var("SQL_USERNAME").expect("Expected a SQL_USERNAME in the environment");
     let password = env::var("SQL_PASSWORD").expect("Expected a SQL_PASSWORD in the environment");
