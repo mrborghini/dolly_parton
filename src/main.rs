@@ -266,7 +266,7 @@ impl EventHandler for Handler {
                             .say(
                                 &ctx.http,
                                 format!(
-                                    "{} You currently have: {} social credits! :money_mouth:",
+                                    "{} currently has: {} social credits! :money_mouth:",
                                     username, credits
                                 ),
                             )
