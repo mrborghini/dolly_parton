@@ -13,3 +13,4 @@ rand = "0.8.5"
 mysql = "24.0.0"
 serde = { version = "1.0", features = ["derive"] }
 reqwest = { version = "0.11", features = ["blocking", "json"] }
+tic_tac_toe_rs = { git = "https://github.com/lamborghinigamer1/tic_tac_toe_rs" }

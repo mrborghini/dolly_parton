@@ -1,6 +1,4 @@
 use dotenv::dotenv;
-use mysql::prelude::*;
-use mysql::*;
 use rand::Rng;
 use serenity::async_trait;
 use serenity::model::channel::Message;
@@ -10,6 +8,10 @@ use std::env;
 use std::ops::RangeInclusive;
 use std::process;
 use serde::Deserialize;
+mod database;
+use mysql::prelude::*;
+use mysql::*;
+use database::*;
 
 fn random_number(startrange: usize, maxrange: usize) -> usize {
     let mut rng = rand::thread_rng();
@@ -82,53 +84,6 @@ fn createdb(
     Ok(())
 }
 
-fn putindb(user: &str, credits: u16) -> Result<(), mysql::Error> {
-    let database_name = "dolly_parton";
-    let username = env::var("SQL_USERNAME").expect("Expected a SQL_USERNAME in the environment");
-    let password = env::var("SQL_PASSWORD").expect("Expected a SQL_PASSWORD in the environment");
-    let hostname = env::var("HOSTNAME").expect("Expected a HOSTNAME in the environment");
-    let port = 3306;
-
-    let opts = Opts::from_url(&format!(
-        "mysql://{}:{}@{}:{}/{}",
-        username, password, hostname, port, database_name
-    ))?;
-
-    let pool = Pool::new(opts)?;
-    let mut conn = pool.get_conn()?;
-
-    let stmt = conn.prep("INSERT INTO social_credits (user, credits) VALUES (?, ?)")?;
-    conn.exec_drop(&stmt, (user, credits))?;
-
-    Ok(())
-}
-
-fn getuserinfo(user: &str) -> Result<Option<(String, i32)>, mysql::Error> {
-    let database_name = "dolly_parton";
-    let username = env::var("SQL_USERNAME").expect("Expected a SQL_USERNAME in the environment");
-    let password = env::var("SQL_PASSWORD").expect("Expected a SQL_PASSWORD in the environment");
-    let hostname = "localhost";
-    let port = 3306;
-
-    let opts = Opts::from_url(&format!(
-        "mysql://{}:{}@{}:{}/{}",
-        username, password, hostname, port, database_name
-    ))?;
-
-    let pool = Pool::new(opts)?;
-    let mut conn = pool.get_conn()?;
-
-    let stmt = conn.prep("SELECT user, credits FROM social_credits WHERE user = ?")?;
-    let mut rows = conn.exec_iter(&stmt, (user,))?;
-
-    if let Some(row) = rows.next() {
-        let (username, credits) = from_row::<(String, i32)>(row?);
-        Ok(Some((username, credits)))
-    } else {
-        Ok(None)
-    }
-}
-
 struct Handler;
 
 #[async_trait]
@@ -174,7 +129,21 @@ impl EventHandler for Handler {
                     println!("Error sending message: {:?}", why);
                 }
             }
-
+            "!work" => {
+                let money:i32 = random_number(0, 20) as i32;
+                if let Err(why) = msg
+                    .channel_id
+                    .say(&ctx.http, format!("{} worked and received {} social credits :dollar:", msg.author, money))
+                    .await
+                {
+                    println!("Error sending message: {:?}", why);
+                }
+                let creditadd = add_credits(&format!("<@{}>", msg.author.id), money);
+                match creditadd {
+                            Ok(_) => println!("Added {} social credits to database for {}", money, msg.author),
+                            Err(err) => eprintln!("Error adding credits: {}", err),
+                        }
+            }
             "!valagents" => {
 
             let mut selectedagents: Vec<&str> = Vec::new();
@@ -189,6 +158,7 @@ impl EventHandler for Handler {
                 "Fade", 
                 "Gekko", 
                 "Harbor", 
+                "Iso",
                 "Jett", 
                 "Kay/O", 
                 "Killjoy", 
