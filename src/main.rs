@@ -113,6 +113,7 @@ impl EventHandler for Handler {
                     "!valagents",
                     "!rizz",
                     "!quote",
+                    "!work",
                 ];
                 commands.sort();
                 let response = format!("**Commands:**\n{}", commands.join("\n"));
