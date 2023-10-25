@@ -132,6 +132,24 @@ impl EventHandler for Handler {
             }
             "!work" => {
                 let money:i32 = random_number(0, 20) as i32;
+                let creditadd = add_credits(&format!("{}", msg.author), money);
+                let mut userfound = false;
+                match creditadd {
+                    Ok(None) => if let Err(why) = msg
+                    .channel_id
+                    .say(&ctx.http, "You're currently not in my database. Please run !socialcredits to get added to the database :)")
+                    .await
+                {
+                    println!("Error sending message: {:?}", why);
+                }
+                    Ok(_) => {
+                        println!("Added {} social credits to database for {}", money, msg.author);
+                        userfound = true;
+                    }
+                    Err(err) => eprintln!("Error adding credits: {}", err),
+                }
+
+                if userfound {
                 let mut moneyemote: String = String::new();
                 for _ in 0..money {
                     moneyemote.push_str(":dollar: ");
@@ -140,14 +158,10 @@ impl EventHandler for Handler {
                     .channel_id
                     .say(&ctx.http, format!("{} worked and received {} social credits {}", msg.author, money, moneyemote))
                     .await
-                {
+                    {
                     println!("Error sending message: {:?}", why);
+                    }
                 }
-                let creditadd = add_credits(&format!("<@{}>", msg.author.id), money);
-                match creditadd {
-                            Ok(_) => println!("Added {} social credits to database for {}", money, msg.author),
-                            Err(err) => eprintln!("Error adding credits: {}", err),
-                        }
             }
             "!valagents" => {
 
@@ -256,9 +270,7 @@ impl EventHandler for Handler {
             }
 
             "!socialcredits" => {
-                let user_id: &u64 = msg.author.id.as_u64();
-                let user_id_string: String = format!("<@{}>", user_id);
-                match getuserinfo(&user_id_string) {
+                match getuserinfo(&format!("{}", msg.author)) {
                     Ok(Some((username, credits))) => {
                         // Do something with the retrieved data
                         if let Err(why) = msg
@@ -277,13 +289,13 @@ impl EventHandler for Handler {
                     }
                     Ok(None) => {
                         println!("User not found");
-                        let adduser = putindb(&user_id_string, 0);
+                        let adduser = putindb(&format!("{}", msg.author), 0);
 
                         match adduser {
-                            Ok(_) => println!("Added {} to database", user_id_string),
+                            Ok(_) => println!("Added {} to database", &format!("{}", msg.author)),
                             Err(err) => eprintln!("Error creating testuser: {}", err),
                         }
-                        if let Err(why) = msg.channel_id.say(&ctx.http, format!("{} Looks like you're not on my database yet... But luckily for you I just added you on my database :wink:. Just do !socialcredits again to see your social credits :)", user_id_string)).await {
+                        if let Err(why) = msg.channel_id.say(&ctx.http, format!("{} Looks like you're not on my database yet... But luckily for you I just added you on my database :wink:. Just do !socialcredits again to see your social credits :)", &format!("{}", msg.author))).await {
                             println!("Error sending message: {:?}", why);
                         }
                     }
