@@ -131,9 +131,13 @@ impl EventHandler for Handler {
             }
             "!work" => {
                 let money:i32 = random_number(0, 20) as i32;
+                let mut moneyemote: String = String::new();
+                for _ in 0..money {
+                    moneyemote.push_str(":dollar: ");
+                }
                 if let Err(why) = msg
                     .channel_id
-                    .say(&ctx.http, format!("{} worked and received {} social credits :dollar:", msg.author, money))
+                    .say(&ctx.http, format!("{} worked and received {} social credits {}", msg.author, money, moneyemote))
                     .await
                 {
                     println!("Error sending message: {:?}", why);
