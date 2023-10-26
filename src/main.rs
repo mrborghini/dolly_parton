@@ -3,15 +3,22 @@ use rand::Rng;
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
+use serenity::model::prelude::GuildId;
+use serenity::model::application::command::Command;
+use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::prelude::*;
 use std::env;
 use std::ops::RangeInclusive;
 use std::process;
 use serde::Deserialize;
-mod database;
 use mysql::prelude::*;
 use mysql::*;
+mod database;
 use database::*;
+use tic_tac_toe_rs::Player;
+mod tictactoelogic;
+use crate::tictactoelogic::TicTacToeLogic;
+mod commands;
 
 fn random_number(startrange: usize, maxrange: usize) -> usize {
     let mut rng = rand::thread_rng();
@@ -83,18 +90,54 @@ fn createdb(
 
     Ok(())
 }
-
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         println!("{} {}", msg.author.name, msg.content);
+    
 
         let splitcommand: Vec<&str> = msg.content.split_whitespace().collect();
 
         if splitcommand.len() > 0 {
             match splitcommand[0] {
+            "!tictactoe" => {
+                let mut tictactoe = TicTacToeLogic::new();
+                if splitcommand.len() > 1 {
+                match splitcommand[1] {
+                    "!join" => {
+                        match tictactoe.players.len() {
+                            2 => tictactoe.start_tic_tac_toe_game(),
+                            1 => tictactoe.add_player(Player::new(format!("{}", msg.author), 'O')),
+                            _ => tictactoe.add_player(Player::new(format!("{}", msg.author), 'X')),
+                        }
+                        println!("Players are in: {}", tictactoe.players.len());
+                        for player in &tictactoe.players {
+                            if let Err(why) = msg
+                    .channel_id
+                    .say(&ctx.http, format!("{} has joined", player.name))
+                    .await
+                {
+                    println!("Error sending message: {:?}", why);
+                }
+        
+                }
+        }
+                    _ => {
+                        
+                    }
+                }
+            }
+            if let Err(why) = msg
+                    .channel_id
+                    .say(&ctx.http, format!("```{}```",tictactoe.show_board()))
+                    .await
+                {
+                    println!("Error sending message: {:?}", why);
+                }
+            }
+        
             "!dollyhelp" => {
                 let mut commands = vec![
                     "!dolly",
@@ -483,10 +526,53 @@ impl EventHandler for Handler {
             _ => {}
         }
     }
-    async fn ready(&self, _: Context, ready: Ready) {
-        println!("{} HAS AWAKENEND!", ready.user.name);
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+        if let Interaction::ApplicationCommand(command) = interaction {
+            println!("Received command interaction: {:#?}", command);
+
+            let content = match command.data.name.as_str() {
+                "ping" => commands::ping::run(&command.data.options),
+                _ => "not implemented :(".to_string(),
+            };
+
+            if let Err(why) = command
+                .create_interaction_response(&ctx.http, |response| {
+                    response
+                        .kind(InteractionResponseType::ChannelMessageWithSource)
+                        .interaction_response_data(|message| message.content(content))
+                })
+                .await
+            {
+                println!("Cannot respond to slash command: {}", why);
+            }
+        }
     }
-}
+    async fn ready(&self, ctx: Context, ready: Ready) {
+        println!("{} HAS AWAKENEND!", ready.user.name);
+        let guild_id = GuildId(
+            env::var("GUILD_ID")
+                .expect("Expected GUILD_ID in environment")
+                .parse()
+                .expect("GUILD_ID must be an integer"),
+        );
+
+        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+            commands
+                .create_application_command(|command| commands::ping::register(command))
+        })
+        .await;
+
+        println!("I now have the following guild slash commands: {:#?}", commands);
+
+        let guild_command = Command::create_global_application_command(&ctx.http, |command| {
+            commands::wonderful_command::register(command)
+        })
+        .await;
+
+        println!("I created the following global slash command: {:#?}", guild_command);
+    }
+    }
+
 
 #[tokio::main]
 async fn main() {
