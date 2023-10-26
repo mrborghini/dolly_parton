@@ -565,7 +565,7 @@ impl EventHandler for Handler {
         println!("I now have the following guild slash commands: {:#?}", commands);
 
         let guild_command = Command::create_global_application_command(&ctx.http, |command| {
-            commands::wonderful_command::register(command)
+            commands::ping::register(command)
         })
         .await;
 
