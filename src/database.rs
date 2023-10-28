@@ -2,7 +2,42 @@ use mysql::prelude::*;
 use mysql::*;
 use std::env;
 
-fn establish_connection() -> Result<Pool, mysql::Error> {
+pub fn _createdb(
+    database_name: &str,
+    username: &str,
+    password: &str,
+    hostname: &str,
+    port: u16,
+) -> Result<(), mysql::Error> {
+    let opts = Opts::from_url(&format!(
+        "mysql://{}:{}@{}:{}/",
+        username, password, hostname, port
+    ))?;
+
+    let pool = Pool::new(opts)?;
+
+    let mut conn = pool.get_conn()?;
+
+    conn.query_drop(&format!("CREATE DATABASE IF NOT EXISTS {}", database_name))?;
+
+    conn.query_drop(&format!("USE {}", database_name))?;
+
+    conn.query_drop(
+        r#"
+        CREATE TABLE IF NOT EXISTS social_credits (
+            id int PRIMARY KEY AUTO_INCREMENT,
+            user varchar(255) NOT NULL,
+            credits int,
+            job varchar(255),
+            salary int
+        )
+    "#,
+    )?;
+
+    Ok(())
+}
+
+fn _establish_connection() -> Result<Pool, mysql::Error> {
     let database_name = "dolly_parton";
     let username = env::var("SQL_USERNAME").expect("Expected a SQL_USERNAME in the environment");
     let password = env::var("SQL_PASSWORD").expect("Expected a SQL_PASSWORD in the environment");
@@ -17,8 +52,8 @@ fn establish_connection() -> Result<Pool, mysql::Error> {
     Ok(Pool::new(opts)?)
 }
 
-pub fn putindb(user: &str, credits: u16) -> Result<(), mysql::Error> {
-    let pool = establish_connection()?;
+pub fn _putindb(user: &str, credits: u16) -> Result<(), mysql::Error> {
+    let pool = _establish_connection()?;
     let mut conn = pool.get_conn()?;
 
     let stmt = conn.prep("INSERT INTO social_credits (user, credits) VALUES (?, ?)")?;
@@ -27,8 +62,8 @@ pub fn putindb(user: &str, credits: u16) -> Result<(), mysql::Error> {
     Ok(())
 }
 
-pub fn getuserinfo(user: &str) -> Result<Option<(String, i32)>, mysql::Error> {
-    let pool = establish_connection()?;
+pub fn _getuserinfo(user: &str) -> Result<Option<(String, i32)>, mysql::Error> {
+    let pool = _establish_connection()?;
     let mut conn = pool.get_conn()?;
 
     let stmt = conn.prep("SELECT user, credits FROM social_credits WHERE user = ?")?;
@@ -42,8 +77,8 @@ pub fn getuserinfo(user: &str) -> Result<Option<(String, i32)>, mysql::Error> {
     }
 }
 
-pub fn add_credits(user: &str, new_credits: i32) -> Result<Option<(String, i32)>, mysql::Error> {
-    let pool = establish_connection()?;
+pub fn _add_credits(user: &str, new_credits: i32) -> Result<Option<(String, i32)>, mysql::Error> {
+    let pool = _establish_connection()?;
     let mut conn = pool.get_conn()?;
 
     // Step 1: Get the current credits for the user

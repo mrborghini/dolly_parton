@@ -1,482 +1,52 @@
 use dotenv::dotenv;
-use rand::Rng;
 use serenity::async_trait;
+use serenity::model::application::command::Command;
+use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::model::prelude::GuildId;
-use serenity::model::application::command::Command;
-use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::prelude::*;
 use std::env;
-use std::ops::RangeInclusive;
-use std::process;
-use serde::Deserialize;
-use mysql::prelude::*;
-use mysql::*;
 mod database;
 use database::*;
-use tic_tac_toe_rs::Player;
-mod tictactoelogic;
-use crate::tictactoelogic::TicTacToeLogic;
 mod commands;
 
-fn random_number(startrange: usize, maxrange: usize) -> usize {
-    let mut rng = rand::thread_rng();
-    let num = rng.gen_range(RangeInclusive::new(startrange, maxrange));
-    return num;
-}
-
-fn format_agents(agents: &[&str]) -> String {
-    let mut formatted_agents = String::new();
-
-    for (index, agent) in agents.iter().enumerate() {
-        let player = format!("**Player {}**:", index + 1);
-        formatted_agents.push_str(&format!("{} {}\n", player, agent));
-    }
-
-    formatted_agents
-}
-
-#[derive(Debug, Deserialize)]
-struct ReceivedQuote {
-content: String,
-author: String,
-}
-
-async fn quote() -> Result<String, reqwest::Error> {
-    let resp: ReceivedQuote = reqwest::Client::new()
-        .get("https://api.quotable.io/random")
-        .send()
-        .await?
-        .json()
-        .await?;
-
-    let quote = format!("{} --{}", resp.content, resp.author);
-
-    Ok(quote)
-}
-
-fn createdb(
-    database_name: &str,
-    username: &str,
-    password: &str,
-    hostname: &str,
-    port: u16,
-) -> Result<(), mysql::Error> {
-    let opts = Opts::from_url(&format!(
-        "mysql://{}:{}@{}:{}/",
-        username, password, hostname, port
-    ))?;
-
-    let pool = Pool::new(opts)?;
-
-    let mut conn = pool.get_conn()?;
-
-    conn.query_drop(&format!("CREATE DATABASE IF NOT EXISTS {}", database_name))?;
-
-    conn.query_drop(&format!("USE {}", database_name))?;
-
-    conn.query_drop(
-        r#"
-        CREATE TABLE IF NOT EXISTS social_credits (
-            id int PRIMARY KEY AUTO_INCREMENT,
-            user varchar(255) NOT NULL,
-            credits int,
-            job varchar(255),
-            salary int
-        )
-    "#,
-    )?;
-
-    Ok(())
-}
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         println!("{} {}", msg.author.name, msg.content);
-    
 
         let splitcommand: Vec<&str> = msg.content.split_whitespace().collect();
 
         if splitcommand.len() > 0 {
             match splitcommand[0] {
-            "!tictactoe" => {
-                let mut tictactoe = TicTacToeLogic::new();
-                if splitcommand.len() > 1 {
-                match splitcommand[1] {
-                    "!join" => {
-                        match tictactoe.players.len() {
-                            2 => tictactoe.start_tic_tac_toe_game(),
-                            1 => tictactoe.add_player(Player::new(format!("{}", msg.author), 'O')),
-                            _ => tictactoe.add_player(Player::new(format!("{}", msg.author), 'X')),
+                "!cal" => {
+                    if splitcommand.len() > 1 {
+                        if splitcommand[1] == "yes" {
+                            if let Err(why) = msg.channel_id.say(&ctx.http, "Yes!").await {
+                                println!("Error sending message: {:?}", why);
+                            }
                         }
-                        println!("Players are in: {}", tictactoe.players.len());
-                        for player in &tictactoe.players {
-                            if let Err(why) = msg
-                    .channel_id
-                    .say(&ctx.http, format!("{} has joined", player.name))
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-        
-                }
-        }
-                    _ => {
-                        
-                    }
-                }
-            }
-            if let Err(why) = msg
-                    .channel_id
-                    .say(&ctx.http, format!("```{}```",tictactoe.show_board()))
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-        
-            "!dollyhelp" => {
-                let mut commands = vec![
-                    "!dolly",
-                    "!cal",
-                    "!cal yes",
-                    "!cal no",
-                    "!cal maybe",
-                    "!socialcredits",
-                    "!rage",
-                    "!compliment",
-                    "!compliment @user",
-                    "!fuckyoudolly",
-                    "!gosleep",
-                    "!silly",
-                    "!valgun",
-                    "!valagents",
-                    "!rizz",
-                    "!quote",
-                    "!work",
-                ];
-                commands.sort();
-                let response = format!("**Commands:**\n{}", commands.join("\n"));
-                if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-            "!dolly" => {
-                if let Err(why) = msg
-                    .channel_id
-                    .say(&ctx.http, "I don't know I just spawned here")
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-            "!work" => {
-                let money:i32 = random_number(0, 20) as i32;
-                let creditadd = add_credits(&format!("{}", msg.author), money);
-                let mut userfound = false;
-                match creditadd {
-                    Ok(None) => if let Err(why) = msg
-                    .channel_id
-                    .say(&ctx.http, "You're currently not in my database. Please run !socialcredits to get added to the database :)")
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-                    Ok(_) => {
-                        println!("Added {} social credits to database for {}", money, msg.author);
-                        userfound = true;
-                    }
-                    Err(err) => eprintln!("Error adding credits: {}", err),
-                }
-
-                if userfound {
-                let mut moneyemote: String = String::new();
-                for _ in 0..money {
-                    moneyemote.push_str(":dollar: ");
-                }
-                if let Err(why) = msg
-                    .channel_id
-                    .say(&ctx.http, format!("{} worked and received {} social credits {}", msg.author, money, moneyemote))
-                    .await
-                    {
-                    println!("Error sending message: {:?}", why);
-                    }
-                }
-            }
-            "!valagents" => {
-
-            let mut selectedagents: Vec<&str> = Vec::new();
-
-            let agents = [
-                "Astra",
-                "Breach", 
-                "Brimstone", 
-                "Chamber", 
-                "Cypher", 
-                "Deadlock", 
-                "Fade", 
-                "Gekko", 
-                "Harbor", 
-                "Iso",
-                "Jett", 
-                "Kay/O", 
-                "Killjoy", 
-                "Neon", 
-                "Omen", 
-                "Phoenix", 
-                "Raze", 
-                "Reyna", 
-                "Sage", 
-                "Skye", 
-                "Sova", 
-                "Viper", 
-                "Yoru"
-                ];
-            
-            while selectedagents.len() < 5 {
-                let agent = agents[random_number(0, agents.len() -1)];
-                if !selectedagents.contains(&agent) {
-                    selectedagents.push(agent);
-                }
-            }
-            if let Err(why) = msg.channel_id.say(&ctx.http, format_agents(&selectedagents)).await {
-                println!("Error sending message: {:?}", why);
-            }            
-
-            }
-            
-
-            "!cal" => {
-                if splitcommand.len() > 1 {
-                    if splitcommand[1] == "yes" {
-                        if let Err(why) = msg.channel_id.say(&ctx.http, "Yes!").await {
+                        if splitcommand[1] == "no" {
+                            if let Err(why) = msg.channel_id.say(&ctx.http, "NO!").await {
+                                println!("Error sending message: {:?}", why);
+                            }
+                        }
+                        if splitcommand[1] == "maybe" {
+                            if let Err(why) = msg.channel_id.say(&ctx.http, ":thinking:").await {
+                                println!("Error sending message: {:?}", why);
+                            }
+                        }
+                    } else {
+                        if let Err(why) = msg.channel_id.say(&ctx.http, "Yes, NO!").await {
                             println!("Error sending message: {:?}", why);
                         }
                     }
-                    if splitcommand[1] == "no" {
-                        if let Err(why) = msg.channel_id.say(&ctx.http, "NO!").await {
-                            println!("Error sending message: {:?}", why);
-                        }
-                    }
-                    if splitcommand[1] == "maybe" {
-                        if let Err(why) = msg.channel_id.say(&ctx.http, ":thinking:").await {
-                            println!("Error sending message: {:?}", why);
-                        }
-                    }
-                } else {
-                    if let Err(why) = msg.channel_id.say(&ctx.http, "Yes, NO!").await {
-                        println!("Error sending message: {:?}", why);
-                    }
                 }
+                _ => {}
             }
-
-            "!rizz" => {
-                if format!("{}", msg.author).as_str() == "<@1019339320731119626>" {
-                    if let Err(why) = msg
-                        .channel_id
-                        .say(
-                            &ctx.http,
-                            format!("{} rizz has: 0%", msg.author),
-                        )
-                        .await
-                    {
-                        println!("Error sending message: {:?}", why);
-                    }
-                }
-                else if format!("{}", msg.author).as_str() == "<@507705534917378050>" {
-                    if let Err(why) = msg
-                        .channel_id
-                        .say(
-                            &ctx.http,
-                            format!("{} rizz has: 100%", msg.author),
-                        )
-                        .await
-                    {
-                        println!("Error sending message: {:?}", why);
-                    }
-                }
-                else {
-                    if let Err(why) = msg
-                        .channel_id
-                        .say(
-                            &ctx.http,
-                            format!("{} rizz has: {}%", msg.author, random_number(0, 101)),
-                        )
-                        .await
-                    {
-                        println!("Error sending message: {:?}", why);
-                    }
-                }
-            }
-
-            "!socialcredits" => {
-                match getuserinfo(&format!("{}", msg.author)) {
-                    Ok(Some((username, credits))) => {
-                        // Do something with the retrieved data
-                        if let Err(why) = msg
-                            .channel_id
-                            .say(
-                                &ctx.http,
-                                format!(
-                                    "{} currently has: {} social credits! :money_mouth:",
-                                    username, credits
-                                ),
-                            )
-                            .await
-                        {
-                            println!("Error sending message: {:?}", why);
-                        }
-                    }
-                    Ok(None) => {
-                        println!("User not found");
-                        let adduser = putindb(&format!("{}", msg.author), 0);
-
-                        match adduser {
-                            Ok(_) => println!("Added {} to database", &format!("{}", msg.author)),
-                            Err(err) => eprintln!("Error creating testuser: {}", err),
-                        }
-                        if let Err(why) = msg.channel_id.say(&ctx.http, format!("{} Looks like you're not on my database yet... But luckily for you I just added you on my database :wink:. Just do !socialcredits again to see your social credits :)", &format!("{}", msg.author))).await {
-                            println!("Error sending message: {:?}", why);
-                        }
-                    }
-                    Err(err) => {
-                        eprintln!("Error retrieving user info: {}", err);
-                    }
-                }
-            }
-
-            "!rage" => {
-                if let Err(why) = msg
-                    .channel_id
-                    .say(
-                        &ctx.http,
-                        "It's okay to be angry sometimes! Just don't make it 9 to 5 :)",
-                    )
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-            "!daddy" => {
-                if let Err(why) = msg
-                    .channel_id
-                    .say(&ctx.http, "https://youtu.be/tT2CI3UK6jA")
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-
-            "!fuckyoudolly" => {
-                if let Err(why) = msg.channel_id.say(&ctx.http, ":rage:").await {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-            "!quit" => {
-                if let Err(why) = msg.channel_id.say(&ctx.http, "Goodbye!").await {
-                    println!("Error sending message: {:?}", why);
-                }
-                process::exit(0);
-            }
-
-            "!compliment" => {
-                let compliments = ["You have a contagious smile!", "Your kindness is a breath of fresh air.", "You're a ray of sunshine on a cloudy day.", "Your creativity knows no bounds.", "You bring out the best in people around you.", "Your positive energy is infectious.", "You have a heart of gold.", "You're a true friend who always knows how to make someone feel special.", "Your positive attitude is inspiring.", "You have an incredible sense of style.", "Your intelligence shines in everything you do.", "You have a heart full of compassion and empathy.", "Your dedication and hard work are truly admirable.", "You have a fantastic sense of humor that always brings joy to others.", "Your perseverance in the face of challenges is remarkable.", "You have a beautiful soul that radiates kindness.", "You are a great listener and always make others feel heard.", "Your passion for life is contagious.", "You have an amazing talent for [insert talent here].", "Your optimism and positivity light up any room you enter.", "You have a remarkable ability to make people feel valued and appreciated.", "Your generosity knows no bounds.", "You have a gift for making the ordinary extraordinary.", "Your presence alone brightens up any room you walk into.", "Your smile has the power to turn someone's day around.", "Your genuine and caring nature makes you a true gem.", "Your intelligence and quick thinking impress everyone around you.", "You have an impeccable taste in [insert interest or hobby here].", "Your determination and perseverance are truly inspiring.", "You have a natural ability to make people feel comfortable and at ease.", "Your confidence is contagious and empowering.", "Your thoughtfulness and attention to detail never go unnoticed.", "You have a beautiful voice that captivates anyone who hears it.", "Your wisdom and insightful perspective are highly valued by those who know you.", "You have an incredible work ethic that sets you apart from the rest.", "Your positive outlook on life is incredibly refreshing.", "You have a unique and captivating personality that draws others in.", "Your kindness towards strangers is a testament to your compassionate nature.", "You possess a remarkable ability to find beauty in the simplest things.", "Your sense of adventure and willingness to try new things is admirable.", "You have an innate ability to bring people together and foster strong connections.", "Your empathy and understanding make you an amazing friend and confidant.", "You have a magnetic aura that attracts positivity and success.", "Your smile is contagious and brightens the day for everyone around you.", "Your determination and perseverance are truly inspiring.", "You have a genuine and kind-hearted soul that touches people's lives.", "You have an extraordinary ability to make people feel seen and heard.", "Your generosity knows no bounds, and you always go the extra mile to help others.", "You have an incredible eye for detail and a knack for perfection.", "Your infectious laughter brings joy to everyone in your presence.", "You have an impeccable sense of timing and know how to make every moment special.", "Your courage to embrace vulnerability is truly inspiring.", "You have a remarkable ability to find beauty and joy in the simplest things.", "Your commitment to personal growth is admirable and sets an example for others.", "You have an incredible intuition that guides you in making wise decisions.", "Your ability to find solutions in difficult situations is remarkable", "You have a magnetic personality that draws people towards you.", "Your authenticity and genuineness are truly refreshing.", "You have an exceptional ability to communicate and connect with others.", "Your presence alone has a calming effect on those around you.", "You have a natural talent for making people feel valued and appreciated.", "Your zest for life and thirst for knowledge are contagious.", "You have an extraordinary ability to turn setbacks into comebacks.", "Your resilience in the face of adversity is truly remarkable.", "You have a genuine curiosity that fuels your continuous learning and growth.", "Your ability to adapt and thrive in any situation is commendable."];
-
-                if splitcommand.len() == 1 {
-                    if let Err(why) = msg
-                        .channel_id
-                        .say(
-                            &ctx.http,
-                            format!(
-                                "{} {}",
-                                msg.author,
-                                compliments[random_number(0, compliments.len() - 1)]
-                            ),
-                        )
-                        .await
-                    {
-                        println!("Error sending message: {:?}", why);
-                    }
-                } else {
-                    if let Err(why) = msg
-                        .channel_id
-                        .say(
-                            &ctx.http,
-                            format!(
-                                "{} {}",
-                                splitcommand[1],
-                                compliments[random_number(0, compliments.len() - 1)]
-                            ),
-                        )
-                        .await
-                    {
-                        println!("Error sending message: {:?}", why);
-                    }
-                }
-            }
-
-            "!silly" => {
-                let sillymessages = [
-                "Look at me I'm silly :man_with_veil_tone1:", 
-                "https://media.tenor.com/8lBGroihh-QAAAAd/you-rage.gif", 
-                "https://media.discordapp.net/attachments/925855860557746267/1081638870610886707/caption-3-1-1.gif?width=344&height=467",
-                "Why couldn't Einstein build a wall? Well he only had Ein stein"
-                ];
-
-                if let Err(why) = msg
-                    .channel_id
-                    .say(
-                        &ctx.http,
-                        sillymessages[random_number(0, sillymessages.len() - 1)],
-                    )
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-
-            "!valgun" => {
-                let valguns = [
-                    "Classic", "Shorty", "Frenzy", "Ghost", "Sherriff", "Stinger", "Spectre",
-                    "Bucky", "Judge", "Bulldog", "Guardian", "Phantom", "Vandal", "Marshal",
-                    "Operator", "Ares", "Odin",
-                ];
-
-                if let Err(why) = msg
-                    .channel_id
-                    .say(&ctx.http, valguns[random_number(0, valguns.len() - 1)])
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-
-            "!gosleep" => {
-                if let Err(why) = msg
-                    .channel_id
-                    .say(&ctx.http, "<@446305232365027328> GO TO SLEEP, but the alarm is gone so I don't tinnitus")
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-           "!quote" => {
-            match quote().await {
-                Ok(quote) =>  if let Err(why) = msg
-                .channel_id
-                .say(&ctx.http, format!("```{}```", quote))
-                .await
-            {
-                println!("Error sending message: {:?}", why);
-            },
-                Err(err) => eprintln!("Error: {}", err),
-            }
-           }
-            _ => {}
-        }
         }
         match msg
             .content
@@ -496,42 +66,47 @@ impl EventHandler for Handler {
             | "buenosdias"
             | "goedemorgen"
             | "buongiorno" => {
-                let morningmessages = [
-                    format!("Good morning, {}! May your day be filled with joy and success.", msg.author),
-                    format!("Rise and shine, {}! It's a brand new day.", msg.author),
-                    format!("Hey {}! Hope you had a restful night and are ready to conquer the day!", msg.author),
-                    format!("Hello there, {}! Wishing you a fantastic morning and a productive day ahead.", msg.author),
-                    format!("Greetings, {}! Let the morning sun energize you for the challenges ahead.", msg.author),
-                    format!("Good morning, {}! Remember to take some time for yourself today.", msg.author),
-                    format!("Morning, {}! Embrace the opportunities this day brings and make the most of them.", msg.author),
-                    format!("Good morning sleepy {}!", msg.author),
-                    format!("Hi {} I hope you have a wonderful morning :)", msg.author),
-                    format!("Good morning {}! It's been a year {} I've really really missed you.", msg.author, msg.author),
-                    ];
-
                 if let Err(why) = msg
                     .channel_id
                     .say(
                         &ctx.http,
-                        format!(
-                            "{}",
-                            morningmessages[random_number(0, morningmessages.len() - 1)]
-                        ),
+                        commands::goodmorning::run(format!("{}", msg.author)),
                     )
                     .await
                 {
                     println!("Error sending message: {:?}", why);
                 }
             }
+            "fuckyoudolly" => {
+                if let Err(why) = msg.channel_id.say(&ctx.http, ":rage:").await {
+                    println!("Error sending message: {:?}", why);
+                }
+            }
             _ => {}
         }
     }
+
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
-            println!("Received command interaction: {:#?}", command);
+            let user = command.user.clone();
+            // println!("Received command interaction: {:#?}", command);
 
             let content = match command.data.name.as_str() {
                 "ping" => commands::ping::run(&command.data.options),
+                "wonderful_command" => commands::wonderful_command::run(&command.data.options),
+                "dollyhelp" => commands::dollyhelp::run(&command.data.options),
+                "work" => commands::work::run(user, &command.data.options),
+                "dolly" => commands::dolly::run(&command.data.options),
+                "valagents" => commands::valagents::run(&command.data.options),
+                "valgun" => commands::valgun::run(&command.data.options),
+                "quote" => commands::quote::run(&command.data.options).await,
+                "rage" => commands::rage::run(&command.data.options),
+                "daddy" => commands::daddy::run(&command.data.options),
+                "gosleep" => commands::gosleep::run(&command.data.options),
+                "compliment" => commands::compliment::run(user, &command.data.options),
+                "socialcredits" => commands::socialcredits::run(user, &command.data.options),
+                "rizz" => commands::rizz::run(user, &command.data.options),
+                "cal" => commands::cal::run(&command.data.options),
                 _ => "not implemented :(".to_string(),
             };
 
@@ -547,32 +122,49 @@ impl EventHandler for Handler {
             }
         }
     }
+
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} HAS AWAKENEND!", ready.user.name);
-        let guild_id = GuildId(
+        let _guild_id = GuildId(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")
                 .parse()
                 .expect("GUILD_ID must be an integer"),
         );
 
-        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-            commands
-                .create_application_command(|command| commands::ping::register(command))
+        // let commands = GuildId::set_application_commands(&_guild_id, &ctx.http, |commands| {
+        //     commands
+        //         .create_application_command(|command| commands::ping::register(command))
+        //         .create_application_command(|command| commands::work::register(command))
+        //         .create_application_command(|command| commands::socialcredits::register(command))
+        //         .create_application_command(|command| commands::cal::register(command))
+        // })
+        // .await;
+
+        // println!("I now have the following guild slash commands: {:#?}", commands);
+
+        let _guild_command = Command::create_global_application_command(&ctx.http, |command| {
+            commands::wonderful_command::register(command);
+            commands::ping::register(command);
+            commands::dollyhelp::register(command);
+            commands::work::register(command);
+            commands::dolly::register(command);
+            commands::valagents::register(command);
+            commands::valgun::register(command);
+            commands::quote::register(command);
+            commands::compliment::register(command);
+            commands::daddy::register(command);
+            commands::gosleep::register(command);
+            commands::rage::register(command);
+            commands::socialcredits::register(command);
+            commands::rizz::register(command);
+            commands::cal::register(command)
         })
         .await;
 
-        println!("I now have the following guild slash commands: {:#?}", commands);
-
-        let guild_command = Command::create_global_application_command(&ctx.http, |command| {
-            commands::ping::register(command)
-        })
-        .await;
-
-        println!("I created the following global slash command: {:#?}", guild_command);
+        // println!("I created the following global slash command: {:#?}", _guild_command);
     }
-    }
-
+}
 
 #[tokio::main]
 async fn main() {
@@ -584,7 +176,7 @@ async fn main() {
     let hostname = env::var("HOSTNAME").expect("Expected a HOSTNAME in the environment");
     let port = 3306;
 
-    let result = createdb(&database_name, &username, &password, &hostname, port);
+    let result = _createdb(&database_name, &username, &password, &hostname, port);
 
     match result {
         Ok(_) => println!("Waking up brain"),
