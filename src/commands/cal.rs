@@ -30,7 +30,7 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
         .description("Yes no maybe")
         .create_option(|option| {
             option
-                .name("option")
+                .name("yes no maybe")
                 .description("Yes no maybe")
                 .kind(CommandOptionType::String)
                 .required(false)
