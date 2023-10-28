@@ -72,7 +72,7 @@ impl EventHandler for Handler {
                 }
             }
             "whoasked" | "whothefuckasked" => {
-                if let Err(why) = msg.channel_id.say(&ctx.http, "I asked :silly_cooljan:").await {
+                if let Err(why) = msg.channel_id.say(&ctx.http, "I asked :sunglasses:").await {
                     println!("Error sending message: {:?}", why);
                 }
             }
