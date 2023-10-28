@@ -54,11 +54,29 @@ impl EventHandler for Handler {
                     println!("Error sending message: {:?}", why);
                 }
             }
+            "hidolly" | "hellodolly" => {
+                if let Err(why) = msg
+                    .channel_id
+                    .say(
+                        &ctx.http,
+                        commands::hidolly::run(format!("{}", msg.author)),
+                    )
+                    .await
+                {
+                    println!("Error sending message: {:?}", why);
+                }
+            }
             "fuckyoudolly" => {
                 if let Err(why) = msg.channel_id.say(&ctx.http, ":rage:").await {
                     println!("Error sending message: {:?}", why);
                 }
             }
+            "whoasked" | "whothefuckasked" => {
+                if let Err(why) = msg.channel_id.say(&ctx.http, "I asked :silly_cooljan:").await {
+                    println!("Error sending message: {:?}", why);
+                }
+            }
+
             _ => {}
         }
     }
