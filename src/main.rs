@@ -118,7 +118,10 @@ impl EventHandler for Handler {
         // })
         // .await;
 
-        // println!("I now have the following guild slash commands: {:#?}", commands);
+        // println!(
+        //     "I now have the following guild slash commands: {:#?}",
+        //     commands
+        // );
 
         let _guild_command = Command::create_global_application_command(&ctx.http, |command| {
             commands::wonderful_command::register(command);
@@ -139,7 +142,10 @@ impl EventHandler for Handler {
         })
         .await;
 
-        // println!("I created the following global slash command: {:#?}", _guild_command);
+        // println!(
+        //     "I created the following global slash command: {:#?}",
+        //     _guild_command
+        // );
     }
 }
 
