@@ -1,6 +1,6 @@
 use dotenv::dotenv;
 use serenity::async_trait;
-// use serenity::model::application::command::Command;
+use serenity::model::application::command::Command;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
@@ -128,7 +128,7 @@ impl EventHandler for Handler {
                 .expect("GUILD_ID must be an integer"),
         );
 
-        let commands = GuildId::set_application_commands(&_guild_id, &ctx.http, |commands| {
+        let _commands = GuildId::set_application_commands(&_guild_id, &ctx.http, |commands| {
             commands
                 .create_application_command(|command| commands::ping::register(command))
                 .create_application_command(|command| commands::work::register(command))
@@ -151,29 +151,29 @@ impl EventHandler for Handler {
         })
         .await;
 
-        println!(
-            "I now have the following guild slash commands: {:#?}",
-            commands
-        );
+        // println!(
+        //     "I now have the following guild slash commands: {:#?}",
+        //     commands
+        // );
 
-        // let _guild_command = Command::create_global_application_command(&ctx.http, |command| {
-        //     commands::wonderful_command::register(command);
-        //     commands::ping::register(command);
-        //     commands::dollyhelp::register(command);
-        //     commands::work::register(command);
-        //     commands::dolly::register(command);
-        //     commands::valagents::register(command);
-        //     commands::valgun::register(command);
-        //     commands::quote::register(command);
-        //     commands::compliment::register(command);
-        //     commands::daddy::register(command);
-        //     commands::gosleep::register(command);
-        //     commands::rage::register(command);
-        //     commands::socialcredits::register(command);
-        //     commands::cal::register(command);
-        //     commands::rizz::register(command)
-        // })
-        // .await;
+        let _guild_command = Command::create_global_application_command(&ctx.http, |command| {
+            commands::wonderful_command::register(command);
+            commands::ping::register(command);
+            commands::dollyhelp::register(command);
+            commands::work::register(command);
+            commands::dolly::register(command);
+            commands::valagents::register(command);
+            commands::valgun::register(command);
+            commands::quote::register(command);
+            commands::compliment::register(command);
+            commands::daddy::register(command);
+            commands::gosleep::register(command);
+            commands::rage::register(command);
+            commands::socialcredits::register(command);
+            commands::cal::register(command);
+            commands::rizz::register(command)
+        })
+        .await;
 
         // println!(
         //     "I created the following global slash command: {:#?}",
