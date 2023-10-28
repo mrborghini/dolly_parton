@@ -98,9 +98,9 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
     command
         .name("compliment")
         .description("Compliment someone or yourself.")
-        .create_option(|option| {
-            option
-                .name("theperson")
+        .create_option(|person| {
+            person
+                .name("person")
                 .description("The person you want to compliment :)")
                 .kind(CommandOptionType::User)
                 .required(false)

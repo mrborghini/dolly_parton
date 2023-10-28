@@ -142,10 +142,10 @@ impl EventHandler for Handler {
         })
         .await;
 
-        // println!(
-        //     "I created the following global slash command: {:#?}",
-        //     _guild_command
-        // );
+        println!(
+            "I created the following global slash command: {:#?}",
+            _guild_command
+        );
     }
 }
 

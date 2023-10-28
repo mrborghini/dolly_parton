@@ -55,8 +55,8 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
         .description("Get your current balance")
         .create_option(|option| {
             option
-                .name("person")
-                .description("The person you want to compliment :)")
+                .name("personbalance")
+                .description("The person you want the balance of")
                 .kind(CommandOptionType::User)
                 .required(false)
         })
