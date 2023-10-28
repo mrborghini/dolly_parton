@@ -84,6 +84,7 @@ impl EventHandler for Handler {
                 "socialcredits" => commands::socialcredits::run(user, &command.data.options),
                 "rizz" => commands::rizz::run(user, &command.data.options),
                 "cal" => commands::cal::run(&command.data.options),
+                "silly" => commands::silly::run(&command.data.options),
                 _ => "not implemented :(".to_string(),
             };
 
@@ -114,7 +115,9 @@ impl EventHandler for Handler {
                 .create_application_command(|command| commands::ping::register(command))
                 .create_application_command(|command| commands::work::register(command))
                 .create_application_command(|command| commands::socialcredits::register(command))
-                .create_application_command(|command| commands::wonderful_command::register(command))
+                .create_application_command(|command| {
+                    commands::wonderful_command::register(command)
+                })
                 .create_application_command(|command| commands::dollyhelp::register(command))
                 .create_application_command(|command| commands::dolly::register(command))
                 .create_application_command(|command| commands::valagents::register(command))
@@ -126,6 +129,7 @@ impl EventHandler for Handler {
                 .create_application_command(|command| commands::rage::register(command))
                 .create_application_command(|command| commands::rizz::register(command))
                 .create_application_command(|command| commands::cal::register(command))
+                .create_application_command(|command| commands::silly::register(command))
         })
         .await;
 

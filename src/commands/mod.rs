@@ -15,3 +15,4 @@ pub mod compliment;
 pub mod gosleep;
 pub mod rizz;
 pub mod cal;
+pub mod silly;
