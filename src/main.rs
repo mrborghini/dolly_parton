@@ -22,29 +22,6 @@ impl EventHandler for Handler {
 
         if splitcommand.len() > 0 {
             match splitcommand[0] {
-                "!cal" => {
-                    if splitcommand.len() > 1 {
-                        if splitcommand[1] == "yes" {
-                            if let Err(why) = msg.channel_id.say(&ctx.http, "Yes!").await {
-                                println!("Error sending message: {:?}", why);
-                            }
-                        }
-                        if splitcommand[1] == "no" {
-                            if let Err(why) = msg.channel_id.say(&ctx.http, "NO!").await {
-                                println!("Error sending message: {:?}", why);
-                            }
-                        }
-                        if splitcommand[1] == "maybe" {
-                            if let Err(why) = msg.channel_id.say(&ctx.http, ":thinking:").await {
-                                println!("Error sending message: {:?}", why);
-                            }
-                        }
-                    } else {
-                        if let Err(why) = msg.channel_id.say(&ctx.http, "Yes, NO!").await {
-                            println!("Error sending message: {:?}", why);
-                        }
-                    }
-                }
                 _ => {}
             }
         }
