@@ -16,6 +16,12 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
+        let bot_id = ctx.cache.current_user_id();
+
+        if msg.author.id == bot_id {
+            return;
+        }
+
         println!("{} {}", msg.author.name, msg.content);
 
         let splitcommand: Vec<&str> = msg.content.split_whitespace().collect();
@@ -25,25 +31,14 @@ impl EventHandler for Handler {
                 _ => {}
             }
         }
-        match msg
-            .content
-            .to_lowercase()
-            .replace(
-                &['(', ')', '?', '!', ' ', ',', '\"', '.', ';', ':', '\''][..],
-                "",
-            )
-            .as_str()
-        {
-            "morning"
-            | "gm"
-            | "gutenmorgen"
-            | "goodmorning"
-            | "goodmorningeveryone"
-            | "goodmornin"
-            | "buenosdias"
-            | "goedemorgen"
-            | "buongiorno" => {
-                if let Err(why) = msg
+
+        let cleanedmessage = msg.content.to_lowercase().replace(
+            &['(', ')', '?', '!', ' ', ',', '\"', '.', ';', ':', '\''][..],
+            "",
+        );
+
+        if cleanedmessage.contains("goodmorn") | cleanedmessage.contains("gm") | cleanedmessage.contains("buongiorno") | cleanedmessage.contains("buenosdias") | cleanedmessage.contains("goedemor") | cleanedmessage.contains("gutenmor"){
+            if let Err(why) = msg
                     .channel_id
                     .say(
                         &ctx.http,
@@ -53,33 +48,32 @@ impl EventHandler for Handler {
                 {
                     println!("Error sending message: {:?}", why);
                 }
-            }
-            "hidolly" | "hellodolly" => {
+        }
+            if cleanedmessage.contains("dolly") | cleanedmessage.contains("parton") {
                 if let Err(why) = msg
                     .channel_id
-                    .say(
-                        &ctx.http,
-                        commands::hidolly::run(format!("{}", msg.author)),
-                    )
+                    .say(&ctx.http, commands::hidolly::run(format!("{}", msg.author)))
                     .await
                 {
                     println!("Error sending message: {:?}", why);
                 }
             }
-            "fuckyoudolly" => {
+            
+            
+            if cleanedmessage.contains("fuckyoudolly") {
                 if let Err(why) = msg.channel_id.say(&ctx.http, ":rage:").await {
                     println!("Error sending message: {:?}", why);
                 }
             }
-            "whoasked" | "whothefuckasked" => {
+            if cleanedmessage.contains("whoasked") | cleanedmessage.contains("whothefuckasked") {
                 if let Err(why) = msg.channel_id.say(&ctx.http, "I asked :sunglasses:").await {
                     println!("Error sending message: {:?}", why);
                 }
             }
 
-            _ => {}
-        }
     }
+
+    
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
