@@ -55,7 +55,16 @@ impl EventHandler for Handler {
             {
                 println!("Error sending message: {:?}", why);
             }
+            return;
         }
+
+        if cleanedmessage.contains("fuckyoudolly") {
+            if let Err(why) = msg.channel_id.say(&ctx.http, ":rage:").await {
+                println!("Error sending message: {:?}", why);
+            }
+            return;
+        }
+
         if cleanedmessage.contains("dolly") | cleanedmessage.contains("parton") {
             if let Err(why) = msg
                 .channel_id
@@ -64,17 +73,14 @@ impl EventHandler for Handler {
             {
                 println!("Error sending message: {:?}", why);
             }
+            return;
         }
 
-        if cleanedmessage.contains("fuckyoudolly") {
-            if let Err(why) = msg.channel_id.say(&ctx.http, ":rage:").await {
-                println!("Error sending message: {:?}", why);
-            }
-        }
         if cleanedmessage.contains("whoasked") | cleanedmessage.contains("whothefuckasked") {
             if let Err(why) = msg.channel_id.say(&ctx.http, "I asked :sunglasses:").await {
                 println!("Error sending message: {:?}", why);
             }
+            return;
         }
     }
 
