@@ -37,43 +37,46 @@ impl EventHandler for Handler {
             "",
         );
 
-        if cleanedmessage.contains("goodmorn") | cleanedmessage.contains("gm") | cleanedmessage.contains("buongiorno") | cleanedmessage.contains("buenosdias") | cleanedmessage.contains("goedemor") | cleanedmessage.contains("gutenmor"){
+        if cleanedmessage == "gm"
+            || cleanedmessage == "morning"
+            || cleanedmessage.contains("goodmorn")
+                | cleanedmessage.contains("buongiorno")
+                | cleanedmessage.contains("buenosdias")
+                | cleanedmessage.contains("goedemor")
+                | cleanedmessage.contains("gutenmor")
+        {
             if let Err(why) = msg
-                    .channel_id
-                    .say(
-                        &ctx.http,
-                        commands::goodmorning::run(format!("{}", msg.author)),
-                    )
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
+                .channel_id
+                .say(
+                    &ctx.http,
+                    commands::goodmorning::run(format!("{}", msg.author)),
+                )
+                .await
+            {
+                println!("Error sending message: {:?}", why);
+            }
         }
-            if cleanedmessage.contains("dolly") | cleanedmessage.contains("parton") {
-                if let Err(why) = msg
-                    .channel_id
-                    .say(&ctx.http, commands::hidolly::run(format!("{}", msg.author)))
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
+        if cleanedmessage.contains("dolly") | cleanedmessage.contains("parton") {
+            if let Err(why) = msg
+                .channel_id
+                .say(&ctx.http, commands::hidolly::run(format!("{}", msg.author)))
+                .await
+            {
+                println!("Error sending message: {:?}", why);
             }
-            
-            
-            if cleanedmessage.contains("fuckyoudolly") {
-                if let Err(why) = msg.channel_id.say(&ctx.http, ":rage:").await {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-            if cleanedmessage.contains("whoasked") | cleanedmessage.contains("whothefuckasked") {
-                if let Err(why) = msg.channel_id.say(&ctx.http, "I asked :sunglasses:").await {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
+        }
 
+        if cleanedmessage.contains("fuckyoudolly") {
+            if let Err(why) = msg.channel_id.say(&ctx.http, ":rage:").await {
+                println!("Error sending message: {:?}", why);
+            }
+        }
+        if cleanedmessage.contains("whoasked") | cleanedmessage.contains("whothefuckasked") {
+            if let Err(why) = msg.channel_id.say(&ctx.http, "I asked :sunglasses:").await {
+                println!("Error sending message: {:?}", why);
+            }
+        }
     }
-
-    
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
