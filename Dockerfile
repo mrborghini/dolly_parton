@@ -2,16 +2,13 @@
 FROM rust:latest
 
 # Set the working directory inside the container
-WORKDIR /usr/src/myapp
+WORKDIR /App
 
 # Copy the Cargo.toml and Cargo.lock files to cache dependencies
-COPY Cargo.toml Cargo.lock ./
+COPY . ./
 
 # Build dependencies without the application code to speed up builds
 RUN cargo build --release && \
-
-# Copy the rest of the application code
-COPY . .
 
 # Build the application
 RUN cargo build --release
