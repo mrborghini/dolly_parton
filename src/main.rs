@@ -65,6 +65,13 @@ impl EventHandler for Handler {
             return;
         }
 
+        if cleanedmessage.contains("kys") && cleanedmessage.contains("dolly") {
+            if let Err(why) = msg.channel_id.say(&ctx.http, ":sob: :rage:").await {
+                println!("Error sending message: {:?}", why);
+            }
+            return;
+        }
+
         if cleanedmessage.contains("dolly") | cleanedmessage.contains("parton") {
             if let Err(why) = msg
                 .channel_id
