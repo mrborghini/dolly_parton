@@ -1,14 +1,20 @@
-# Use the official Rust image as the base image
-FROM rust:latest
+ARG APP_NAME=dolly_parton
 
-# Set the working directory inside the container
-WORKDIR /App
+FROM rust:alpine AS build
+ARG APP_NAME
+WORKDIR /app
 
-# Copy the Cargo.toml and Cargo.lock files to cache dependencies
-COPY . ./
+# Install host build dependencies.
+RUN apk add --no-cache clang lld musl-dev git pkgconf libressl-dev
 
-# Build the application
-RUN cargo build --release
+COPY . .
 
-# Set the startup command to run the compiled binary
-CMD ["./target/release/dolly_parton"]
+RUN cargo build --release && mv ./target/release/$APP_NAME /bin/server
+
+FROM alpine:latest AS final
+
+# Copy the executable from the "build" stage.
+COPY --from=build /bin/server /bin/
+
+# What the container should run when it is started.
+CMD ["/bin/server"]

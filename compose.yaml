@@ -1,0 +1,29 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: dolly_parton
+      MYSQL_USER: jb
+      MYSQL_PASSWORD: password
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+  server:
+    restart: always
+    build:
+      context: .
+      target: final
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - SQL_USERNAME=${SQL_USERNAME}
+      - SQL_PASSWORD=${SQL_PASSWORD}
+      - HOSTNAME=${HOSTNAME}
+      - GUILD_ID=${GUILD_ID}
+    depends_on:
+      - mariadb
+
+volumes:
+  mariadb_data:
