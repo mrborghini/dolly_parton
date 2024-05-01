@@ -1,6 +1,6 @@
 use mysql::prelude::*;
 use mysql::*;
-use std::{env, io};
+use std::{env, io, thread, time};
 
 pub fn _createdb(
     database_name: &str,
@@ -20,6 +20,7 @@ pub fn _createdb(
                 println!("Attempt {}: {:?}", i + 1, err);
             }
         }
+        thread::sleep(time::Duration::from_secs(5));
     }
 
     Err(Error::from(mysql::Error::from(io::Error::new(
