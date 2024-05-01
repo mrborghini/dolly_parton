@@ -1,8 +1,34 @@
 use mysql::prelude::*;
 use mysql::*;
-use std::env;
+use std::{env, io};
 
 pub fn _createdb(
+    database_name: &str,
+    username: &str,
+    password: &str,
+    hostname: &str,
+    port: u16,
+) -> Result<(), mysql::Error> {
+    let max_attempts = 10;
+
+    for i in 0..max_attempts {
+        println!("DOLLY WAKE UP ({}/{})", i + 1, max_attempts);
+
+        match _connect_and_create(database_name, username, password, hostname, port) {
+            Ok(_) => return Ok(()),
+            Err(err) => {
+                println!("Attempt {}: {:?}", i + 1, err);
+            }
+        }
+    }
+
+    Err(Error::from(mysql::Error::from(io::Error::new(
+        io::ErrorKind::Other,
+        "Max attempts reached",
+    ))))
+}
+
+fn _connect_and_create(
     database_name: &str,
     username: &str,
     password: &str,
@@ -19,7 +45,6 @@ pub fn _createdb(
     let mut conn = pool.get_conn()?;
 
     conn.query_drop(&format!("CREATE DATABASE IF NOT EXISTS {}", database_name))?;
-
     conn.query_drop(&format!("USE {}", database_name))?;
 
     conn.query_drop(
