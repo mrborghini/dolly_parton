@@ -19,3 +19,4 @@ pub mod silly;
 pub mod hidolly;
 pub mod add_silly_message;
 pub mod add_goodmorning_message;
+pub mod version;

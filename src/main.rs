@@ -1,3 +1,5 @@
+pub const VERSION: f32 = 5.4;
+
 use dotenv::dotenv;
 use serenity::async_trait;
 use serenity::model::application::command::Command;
@@ -94,7 +96,6 @@ impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
             let user = command.user.clone();
-            // println!("Received command interaction: {:#?}", command);
 
             let content = match command.data.name.as_str() {
                 "ping" => commands::ping::run(&command.data.options),
@@ -117,6 +118,7 @@ impl EventHandler for Handler {
                 "rizz" => commands::rizz::run(user, &command.data.options),
                 "cal" => commands::cal::run(&command.data.options),
                 "silly" => commands::silly::run(user, &command.data.options),
+                "version" => commands::version::run(),
                 _ => "not implemented :(".to_string(),
             };
 
@@ -160,6 +162,7 @@ impl EventHandler for Handler {
                 .create_application_command(|command| commands::gosleep::register(command))
                 .create_application_command(|command| commands::rage::register(command))
                 .create_application_command(|command| commands::rizz::register(command))
+                .create_application_command(|command| commands::version::register(command))
                 .create_application_command(|command| commands::cal::register(command))
                 .create_application_command(|command| commands::silly::register(command))
                 .create_application_command(|command| {
@@ -170,11 +173,6 @@ impl EventHandler for Handler {
                 })
         })
         .await;
-
-        // println!(
-        //     "I now have the following guild slash commands: {:#?}",
-        //     commands
-        // );
 
         let _guild_command = Command::create_global_application_command(&ctx.http, |command| {
             commands::wonderful_command::register(command);
@@ -190,17 +188,13 @@ impl EventHandler for Handler {
             commands::gosleep::register(command);
             commands::rage::register(command);
             commands::socialcredits::register(command);
+            commands::version::register(command);
             commands::cal::register(command);
             commands::rizz::register(command);
             commands::add_silly_message::register(command);
             commands::add_goodmorning_message::register(command)
         })
         .await;
-
-        // println!(
-        //     "I created the following global slash command: {:#?}",
-        //     _guild_command
-        // );
     }
 }
 
