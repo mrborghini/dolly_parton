@@ -16,7 +16,7 @@ pub fn run(options: &[CommandDataOption]) -> String {
 
     let _ = _add_silly_message(message.as_str());
 
-    format!("Successfully added {}", message)
+    format!("Successfully added '{}'", message)
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
