@@ -33,7 +33,7 @@ pub fn run(userid: User, _options: &[CommandDataOption]) -> String {
             author, money, moneyemote
         );
     } else {
-        return "You're currently not in my database. Please run !socialcredits to get added to the database :)".to_string();
+        return "You're currently not in my database. Please run /socialcredits to get added to the database :)".to_string();
     }
 }
 

@@ -38,7 +38,7 @@ pub fn run(user: User, options: &[CommandDataOption]) -> String {
                         Ok(_) => println!("Added {} to database", &format!("{}", user)),
                         Err(err) => eprintln!("Error creating user: {}", err),
                     }
-                    format!("{} Looks like you're not on my database yet... But luckily for you I just added you on my database :wink:. Just do !socialcredits again to see your social credits :)", user)
+                    format!("{} Looks like you're not on my database yet... But luckily for you I just added you on my database :wink:. Just do /socialcredits again to see your social credits :)", user)
                 } else {
                     format!("{} has never ran /socialcredits", user)
                 }

@@ -22,6 +22,8 @@ pub fn run(_options: &[CommandDataOption]) -> String {
         "/work",
         "/wonderful_command",
         "/ping",
+        "/add_silly_message message (to ping the user do :user:)",
+        "/add_goodmorning_message message (to ping the user do :user:)",
     ];
     commands.sort();
     let response = format!("**Commands:**\n{}", commands.join("\n"));
