@@ -17,3 +17,5 @@ pub mod rizz;
 pub mod cal;
 pub mod silly;
 pub mod hidolly;
+pub mod add_silly_message;
+pub mod add_goodmorning_message;

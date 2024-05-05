@@ -109,10 +109,14 @@ impl EventHandler for Handler {
                 "daddy" => commands::daddy::run(&command.data.options),
                 "gosleep" => commands::gosleep::run(&command.data.options),
                 "compliment" => commands::compliment::run(user, &command.data.options),
+                "add_silly_message" => commands::add_silly_message::run(&command.data.options),
+                "add_goodmorning_message" => {
+                    commands::add_goodmorning_message::run(&command.data.options)
+                }
                 "socialcredits" => commands::socialcredits::run(user, &command.data.options),
                 "rizz" => commands::rizz::run(user, &command.data.options),
                 "cal" => commands::cal::run(&command.data.options),
-                "silly" => commands::silly::run(&command.data.options),
+                "silly" => commands::silly::run(user, &command.data.options),
                 _ => "not implemented :(".to_string(),
             };
 
@@ -158,6 +162,12 @@ impl EventHandler for Handler {
                 .create_application_command(|command| commands::rizz::register(command))
                 .create_application_command(|command| commands::cal::register(command))
                 .create_application_command(|command| commands::silly::register(command))
+                .create_application_command(|command| {
+                    commands::add_silly_message::register(command)
+                })
+                .create_application_command(|command| {
+                    commands::add_goodmorning_message::register(command)
+                })
         })
         .await;
 
@@ -181,7 +191,9 @@ impl EventHandler for Handler {
             commands::rage::register(command);
             commands::socialcredits::register(command);
             commands::cal::register(command);
-            commands::rizz::register(command)
+            commands::rizz::register(command);
+            commands::add_silly_message::register(command);
+            commands::add_goodmorning_message::register(command)
         })
         .await;
 

@@ -1,4 +1,4 @@
-use crate::commands::randomnumber::*;
+use crate::{_get_random_good_morning_message, commands::randomnumber::*};
 
 pub fn run(author: String) -> String {
     let morningmessages = [
@@ -34,5 +34,19 @@ pub fn run(author: String) -> String {
             author, author
         ),
     ];
-    morningmessages[random_number(0, morningmessages.len() - 1)].to_string()
+
+    let random_message = _get_random_good_morning_message();
+
+    match random_message {
+        Ok(Some((message, _))) => {
+            return message.replace(":user:", &author.to_string());
+        }
+        Ok(None) => {
+            return morningmessages[random_number(0, morningmessages.len() - 1)].to_string();
+        }
+        Err(err) => {
+            eprintln!("Error: {}", err);
+            return "Something went wrong".to_string();
+        }
+    }
 }

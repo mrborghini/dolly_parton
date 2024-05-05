@@ -51,12 +51,22 @@ fn _connect_and_create(
     conn.query_drop(
         r#"
         CREATE TABLE IF NOT EXISTS social_credits (
-            id int PRIMARY KEY AUTO_INCREMENT,
+            id INT PRIMARY KEY AUTO_INCREMENT,
             user varchar(255) NOT NULL,
-            credits int,
+            credits INT,
             job varchar(255),
-            salary int
-        )
+            salary INT
+        );
+
+        CREATE TABLE IF NOT EXISTS silly_messages (
+            id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+            text TEXT NOT NULL
+        );
+
+        CREATE TABLE morning_messages (
+            id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+            message TEXT NOT NULL
+        );
     "#,
     )?;
 
@@ -88,6 +98,28 @@ pub fn _putindb(user: &str, credits: u16) -> Result<(), mysql::Error> {
     Ok(())
 }
 
+pub fn _add_silly_message(message: &str) -> Result<(), mysql::Error> {
+    println!("Adding {} to silly_messages", message);
+    let pool = _establish_connection()?;
+    let mut conn = pool.get_conn()?;
+
+    let stmt = conn.prep("INSERT INTO silly_messages (text) VALUES (?)")?;
+    conn.exec_drop(&stmt, (message,))?;
+
+    Ok(())
+}
+
+pub fn _add_goodmorning_message(message: &str) -> Result<(), mysql::Error> {
+    println!("Adding {} to goodmorning_messages", message);
+    let pool = _establish_connection()?;
+    let mut conn = pool.get_conn()?;
+
+    let stmt = conn.prep("INSERT INTO morning_messages (message) VALUES (?)")?;
+    conn.exec_drop(&stmt, (message,))?;
+
+    Ok(())
+}
+
 pub fn _getuserinfo(user: &str) -> Result<Option<(String, i32)>, mysql::Error> {
     let pool = _establish_connection()?;
     let mut conn = pool.get_conn()?;
@@ -98,6 +130,36 @@ pub fn _getuserinfo(user: &str) -> Result<Option<(String, i32)>, mysql::Error> {
     if let Some(row) = rows.next() {
         let (username, credits) = from_row::<(String, i32)>(row?);
         Ok(Some((username, credits)))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn _get_random_silly_message() -> Result<Option<(String, i32)>, mysql::Error> {
+    let pool = _establish_connection()?;
+    let mut conn = pool.get_conn()?;
+
+    let query = "SELECT text, id FROM silly_messages ORDER BY RAND() LIMIT 1";
+    let mut rows = conn.query_iter(query)?;
+
+    if let Some(row) = rows.next() {
+        let (message, id): (String, i32) = mysql::from_row(row?);
+        Ok(Some((message, id)))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn _get_random_good_morning_message() -> Result<Option<(String, i32)>, mysql::Error> {
+    let pool = _establish_connection()?;
+    let mut conn = pool.get_conn()?;
+
+    let query = "SELECT message, id FROM morning_messages ORDER BY RAND() LIMIT 1";
+    let mut rows = conn.query_iter(query)?;
+
+    if let Some(row) = rows.next() {
+        let (message, id): (String, i32) = mysql::from_row(row?);
+        Ok(Some((message, id)))
     } else {
         Ok(None)
     }
