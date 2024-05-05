@@ -1,4 +1,10 @@
-pub const VERSION: f32 = 5.5;
+pub fn version() -> String {
+    let version_string = env!("CARGO_PKG_VERSION");
+
+    let parts: Vec<&str> = version_string.split(".").collect();
+
+    format!("v{}.{}", parts[0], parts[1])
+}
 
 use dotenv::dotenv;
 use serenity::async_trait;
@@ -200,6 +206,7 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
+    println!("I'm Dolly {}", version());
     println!("WAKE UP!");
     dotenv().ok();
     let database_name = "dolly_parton";

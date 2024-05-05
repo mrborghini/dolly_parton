@@ -1,9 +1,9 @@
 use serenity::builder::CreateApplicationCommand;
 
-use crate::VERSION;
+use crate::version;
 
 pub fn run() -> String {
-    format!("I'm Dolly v{}", VERSION)
+    format!("I'm Dolly {}", version())
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
