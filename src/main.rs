@@ -1,4 +1,4 @@
-pub const VERSION: f32 = 5.4;
+pub const VERSION: f32 = 5.5;
 
 use dotenv::dotenv;
 use serenity::async_trait;
