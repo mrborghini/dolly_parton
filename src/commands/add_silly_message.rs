@@ -13,10 +13,13 @@ pub fn run(options: &[CommandDataOption]) -> String {
             message = customuser.clone();
         }
     }
+    let formatted_message = message
+        .replace("@everyone", "everyone")
+        .replace("@here", "here");
 
-    let _ = _add_silly_message(message.as_str());
+    let _ = _add_silly_message(formatted_message.as_str());
 
-    format!("Successfully added '{}'", message)
+    format!("Successfully added: `{}`", formatted_message)
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

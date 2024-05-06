@@ -14,9 +14,12 @@ pub fn run(options: &[CommandDataOption]) -> String {
         }
     }
 
-    let _ = _add_goodmorning_message(message.as_str());
+    let formatted_message = message
+        .replace("@everyone", "everyone")
+        .replace("@here", "here");
+    let _ = _add_goodmorning_message(formatted_message.as_str());
 
-    format!("Successfully added '{}'", message)
+    format!("Successfully added: `{}`", formatted_message)
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
