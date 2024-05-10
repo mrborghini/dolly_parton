@@ -51,7 +51,6 @@ async fn get_ai_message(message: String, base_url: String) -> Result<String, Box
             for &item in ctx_i32.iter() {
                 if !contexts.contains(&item) && !allowed.contains(&item) {
                     allowed.push(item);
-                    println!("Added {}", item);
                 }
             }
 
