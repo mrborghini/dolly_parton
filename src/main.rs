@@ -83,7 +83,7 @@ impl EventHandler for Handler {
         if cleanedmessage.contains("dolly") | cleanedmessage.contains("parton") {
             if let Err(why) = msg
                 .channel_id
-                .say(&ctx.http, commands::hidolly::run(format!("{}", msg.author)))
+                .say(&ctx.http, commands::hidolly::run(format!("{}", msg.author), msg.content).await)
                 .await
             {
                 println!("Error sending message: {:?}", why);

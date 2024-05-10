@@ -22,6 +22,7 @@ services:
       - SQL_PASSWORD=${SQL_PASSWORD}
       - HOSTNAME=${HOSTNAME}
       - GUILD_ID=${GUILD_ID}
+      - OLLAMA_URL=${OLLAMA_URL}
     depends_on:
       - mariadb
 
