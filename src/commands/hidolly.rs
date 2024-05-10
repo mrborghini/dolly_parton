@@ -1,14 +1,26 @@
-use crate::commands::randomnumber::*;
+use crate::{_add_context_to_dolly_ai, _get_dolly_context, commands::randomnumber::*};
 use serde_json::{json, Value};
 use std::{env, error::Error};
 
 async fn get_ai_message(message: String, base_url: String) -> Result<String, Box<dyn Error>> {
-    let url = format!("{}/api/chat", base_url);
+    let mut contexts: Vec<i32> = Vec::new();
+
+    let received_contexts = _get_dolly_context();
+
+    match received_contexts {
+        Ok(ctx) => {
+            contexts = ctx;
+        }
+        Err(e) => {
+            eprintln!("{}", e);
+        }
+    }
+
+    let url = format!("{}/api/generate", base_url);
     let request_body = json!({
         "model": "llama3",
-        "messages": [
-            { "role": "user", "content": message }
-        ]
+        "prompt": message,
+        "context": contexts
     });
 
     let response_text = reqwest::Client::new()
@@ -24,8 +36,17 @@ async fn get_ai_message(message: String, base_url: String) -> Result<String, Box
     for line in response_text.lines() {
         let response: Value = serde_json::from_str(line)?;
 
-        if let Some(content) = response["message"]["content"].as_str() {
+        if let Some(content) = response["response"].as_str() {
             content_string.push_str(content);
+        }
+
+        if let Some(ctx) = response["context"].as_array() {
+            let ctx_i32: Vec<i32> = ctx
+                .iter()
+                .filter_map(|v| v.as_i64())
+                .map(|v| v as i32)
+                .collect();
+            let _ = _add_context_to_dolly_ai(&ctx_i32);
         }
     }
 

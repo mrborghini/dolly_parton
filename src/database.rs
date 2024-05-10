@@ -63,9 +63,14 @@ fn _connect_and_create(
             text TEXT NOT NULL
         );
 
-        CREATE TABLE morning_messages (
+        CREATE TABLE IF NOT EXISTS morning_messages (
             id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
             message TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS ai_dolly (
+            id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+            context INT NOT NULL
         );
     "#,
     )?;
@@ -109,6 +114,18 @@ pub fn _add_silly_message(message: &str) -> Result<(), mysql::Error> {
     Ok(())
 }
 
+pub fn _add_context_to_dolly_ai(context: &Vec<i32>) -> Result<(), mysql::Error> {
+    let pool = _establish_connection()?;
+    let mut conn = pool.get_conn()?;
+
+    for single_context in context {
+        let stmt = conn.prep("INSERT INTO ai_dolly (context) VALUES (?)")?;
+        conn.exec_drop(&stmt, (single_context,))?;
+    }
+
+    Ok(())
+}
+
 pub fn _add_goodmorning_message(message: &str) -> Result<(), mysql::Error> {
     println!("Adding {} to goodmorning_messages", message);
     let pool = _establish_connection()?;
@@ -134,6 +151,23 @@ pub fn _getuserinfo(user: &str) -> Result<Option<(String, i32)>, mysql::Error> {
         Ok(None)
     }
 }
+
+pub fn _get_dolly_context() -> Result<Vec<i32>, mysql::Error> {
+    let pool = _establish_connection()?;
+    let mut conn = pool.get_conn()?;
+    let mut found_contexts: Vec<i32> = Vec::new();
+
+    let rows = conn.query_iter("SELECT context FROM ai_dolly")?;
+
+    for row in rows {
+        let row = row?;
+        let context: i32 = from_row(row);
+        found_contexts.push(context);
+    }
+
+    Ok(found_contexts)
+}
+
 
 pub fn _get_random_silly_message() -> Result<Option<(String, i32)>, mysql::Error> {
     let pool = _establish_connection()?;
