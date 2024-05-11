@@ -47,7 +47,12 @@ async fn get_ai_message(message: String, base_url: String) -> Result<String, Box
                 .map(|v| v as i32)
                 .collect();
 
-            let _ = _add_context_to_dolly_ai(&ctx_i32);
+            let ctx_string = ctx_i32
+                .iter()
+                .map(|&x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(", ");
+            let _ = _add_context_to_dolly_ai(format!("[{}]",ctx_string));
         }
     }
 

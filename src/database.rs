@@ -70,7 +70,7 @@ fn _connect_and_create(
 
         CREATE TABLE IF NOT EXISTS ai_dolly (
             id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-            context INT NOT NULL
+            context LONGTEXT NOT NULL
         );
     "#,
     )?;
@@ -114,17 +114,15 @@ pub fn _add_silly_message(message: &str) -> Result<(), mysql::Error> {
     Ok(())
 }
 
-pub fn _add_context_to_dolly_ai(context: &Vec<i32>) -> Result<(), mysql::Error> {
+pub fn _add_context_to_dolly_ai(context: String) -> Result<(), mysql::Error> {
     let pool = _establish_connection()?;
     let mut conn = pool.get_conn()?;
 
     let query = "TRUNCATE ai_dolly;";
     let _ = conn.query_iter(query);
 
-    for single_context in context {
-        let stmt = conn.prep("INSERT INTO ai_dolly (context) VALUES (?)")?;
-        conn.exec_drop(&stmt, (single_context,))?;
-    }
+    let stmt = conn.prep("INSERT INTO ai_dolly (context) VALUES (?)")?;
+    conn.exec_drop(&stmt, (context,))?;
 
     Ok(())
 }
@@ -164,13 +162,18 @@ pub fn _get_dolly_context() -> Result<Vec<i32>, mysql::Error> {
 
     for row in rows {
         let row = row?;
-        let context: i32 = from_row(row);
-        found_contexts.push(context);
+        let context_string: String = from_row(row);
+
+        let no_backets_context: String = context_string.replace("[", "").replace("]", "");
+
+        for ctx in no_backets_context.split(", ") {
+            let converted_to_i32: i32 = ctx.parse().unwrap();
+            found_contexts.push(converted_to_i32);
+        }
     }
 
     Ok(found_contexts)
 }
-
 
 pub fn _get_random_silly_message() -> Result<Option<(String, i32)>, mysql::Error> {
     let pool = _establish_connection()?;
