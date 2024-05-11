@@ -41,20 +41,13 @@ async fn get_ai_message(message: String, base_url: String) -> Result<String, Box
         }
 
         if let Some(ctx) = response["context"].as_array() {
-            let mut allowed: Vec<i32> = Vec::new();
             let ctx_i32: Vec<i32> = ctx
                 .iter()
                 .filter_map(|v| v.as_i64())
                 .map(|v| v as i32)
                 .collect();
 
-            for &item in ctx_i32.iter() {
-                if !contexts.contains(&item) && !allowed.contains(&item) {
-                    allowed.push(item);
-                }
-            }
-
-            let _ = _add_context_to_dolly_ai(&allowed);
+            let _ = _add_context_to_dolly_ai(&ctx_i32);
         }
     }
 

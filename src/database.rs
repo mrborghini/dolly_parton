@@ -118,6 +118,9 @@ pub fn _add_context_to_dolly_ai(context: &Vec<i32>) -> Result<(), mysql::Error> 
     let pool = _establish_connection()?;
     let mut conn = pool.get_conn()?;
 
+    let query = "TRUNCATE ai_dolly;";
+    let _ = conn.query_iter(query);
+
     for single_context in context {
         let stmt = conn.prep("INSERT INTO ai_dolly (context) VALUES (?)")?;
         conn.exec_drop(&stmt, (single_context,))?;
