@@ -23,6 +23,7 @@ services:
       - HOSTNAME=${HOSTNAME}
       - GUILD_ID=${GUILD_ID}
       - OLLAMA_URL=${OLLAMA_URL}
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
     depends_on:
       - mariadb
 

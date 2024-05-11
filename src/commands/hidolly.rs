@@ -2,7 +2,11 @@ use crate::{_add_context_to_dolly_ai, _get_dolly_context, commands::randomnumber
 use serde_json::{json, Value};
 use std::{env, error::Error};
 
-async fn get_ai_message(message: String, base_url: String) -> Result<String, Box<dyn Error>> {
+async fn get_ai_message(
+    message: String,
+    base_url: String,
+    ollama_model: String,
+) -> Result<String, Box<dyn Error>> {
     let mut contexts: Vec<i32> = Vec::new();
 
     let received_contexts = _get_dolly_context();
@@ -18,7 +22,7 @@ async fn get_ai_message(message: String, base_url: String) -> Result<String, Box
 
     let url = format!("{}/api/generate", base_url);
     let request_body = json!({
-        "model": "llama3",
+        "model": ollama_model,
         "prompt": message,
         "context": contexts
     });
@@ -67,6 +71,18 @@ pub async fn run(author: String, message: String) -> String {
     ];
 
     let ollama_url = env::var("OLLAMA_URL");
+    let ollama_model = env::var("OLLAMA_MODEL");
+
+    let chosen_model: String;
+
+    match ollama_model {
+        Ok(model) => {
+            chosen_model = model;
+        }
+        Err(_) => {
+            chosen_model = "llama3".to_string();
+        }
+    }
 
     let final_url: String;
 
@@ -80,7 +96,7 @@ pub async fn run(author: String, message: String) -> String {
         }
     }
 
-    let get_message = get_ai_message(message, final_url).await;
+    let get_message = get_ai_message(message, final_url, chosen_model).await;
 
     match get_message {
         Ok(message) => {
