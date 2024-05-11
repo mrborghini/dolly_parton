@@ -52,7 +52,7 @@ async fn get_ai_message(message: String, base_url: String) -> Result<String, Box
                 .map(|&x| x.to_string())
                 .collect::<Vec<String>>()
                 .join(", ");
-            let _ = _add_context_to_dolly_ai(format!("[{}]",ctx_string));
+            let _ = _add_context_to_dolly_ai(format!("[{}]", ctx_string));
         }
     }
 
@@ -84,7 +84,12 @@ pub async fn run(author: String, message: String) -> String {
 
     match get_message {
         Ok(message) => {
-            return format!("{} {}", author, message);
+            let trimmed_message = if message.len() > 1950 {
+                &message[..1950]
+            } else {
+                &message
+            };
+            return format!("{} {}", author, trimmed_message);
         }
         Err(e) => {
             eprintln!("{}", e);
