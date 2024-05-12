@@ -59,7 +59,8 @@ async fn get_ai_message(
             let _ = _add_context_to_dolly_ai(format!("[{}]", ctx_string));
         }
     }
-
+    
+    println!("Generated: {}", content_string);
     Ok(content_string)
 }
 
@@ -96,16 +97,21 @@ pub async fn run(author: String, message: String) -> String {
         }
     }
 
-    let get_message = get_ai_message(message, final_url, chosen_model).await;
+    let get_message = get_ai_message(
+        format!("Sent by: ({}) {}", author, message),
+        final_url,
+        chosen_model,
+    )
+    .await;
 
     match get_message {
         Ok(message) => {
             let trimmed_message = if message.len() > 1950 {
-                &message[..1950]
+                &message[..2000]
             } else {
                 &message
             };
-            return format!("{} {}", author, trimmed_message);
+            return trimmed_message.to_string();
         }
         Err(e) => {
             eprintln!("{}", e);
