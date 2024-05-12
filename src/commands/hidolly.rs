@@ -123,7 +123,7 @@ pub async fn run(author: String, message: String) -> String {
     match get_message {
         Ok(message) => {
             let trimmed_message = if message.len() > 1950 {
-                &message[..2000]
+                &message[..1950]
             } else {
                 &message
             };
