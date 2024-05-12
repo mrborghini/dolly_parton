@@ -6,6 +6,7 @@ async fn get_ai_message(
     message: String,
     base_url: String,
     ollama_model: String,
+    ollama_system_message: String,
 ) -> Result<String, Box<dyn Error>> {
     let mut contexts: Vec<i32> = Vec::new();
 
@@ -24,6 +25,7 @@ async fn get_ai_message(
     let request_body = json!({
         "model": ollama_model,
         "prompt": message,
+        "system": ollama_system_message,
         "context": contexts
     });
 
@@ -59,7 +61,7 @@ async fn get_ai_message(
             let _ = _add_context_to_dolly_ai(format!("[{}]", ctx_string));
         }
     }
-    
+
     println!("Generated: {}", content_string);
     Ok(content_string)
 }
@@ -73,8 +75,10 @@ pub async fn run(author: String, message: String) -> String {
 
     let ollama_url = env::var("OLLAMA_URL");
     let ollama_model = env::var("OLLAMA_MODEL");
+    let ollama_system_message = env::var("OLLAMA_SYSTEM_MESSAGE");
 
     let chosen_model: String;
+    let chosen_system_message: String;
 
     match ollama_model {
         Ok(model) => {
@@ -82,6 +86,17 @@ pub async fn run(author: String, message: String) -> String {
         }
         Err(_) => {
             chosen_model = "llama3".to_string();
+        }
+    }
+
+    match ollama_system_message {
+        Ok(message) => {
+            chosen_system_message = message;
+            println!("{}", chosen_system_message);
+        }
+        Err(e) => {
+            eprintln!("{}", e);
+            chosen_system_message = "Very useful assistant".to_string();
         }
     }
 
@@ -101,6 +116,7 @@ pub async fn run(author: String, message: String) -> String {
         format!("Sent by: ({}) {}", author, message),
         final_url,
         chosen_model,
+        chosen_system_message,
     )
     .await;
 
