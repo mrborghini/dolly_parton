@@ -113,7 +113,7 @@ pub async fn run(author: String, message: String) -> String {
     }
 
     let get_message = get_ai_message(
-        format!("Sent by: ({}) {}", author, message),
+        message,
         final_url,
         chosen_model,
         chosen_system_message,
