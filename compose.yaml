@@ -25,6 +25,7 @@ services:
       - OLLAMA_URL=${OLLAMA_URL}
       - OLLAMA_MODEL=${OLLAMA_MODEL}
       - OLLAMA_SYSTEM_MESSAGE=${OLLAMA_SYSTEM_MESSAGE}
+      - RESPOND_TO_ALL_MESSAGES=${RESPOND_TO_ALL_MESSAGES}
     depends_on:
       - mariadb
 
