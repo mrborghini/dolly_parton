@@ -80,12 +80,33 @@ impl EventHandler for Handler {
             return;
         }
 
-        if cleanedmessage.contains("dolly") | cleanedmessage.contains("parton") | cleanedmessage.contains(&bot_id.to_string()) {
+        let respond_to_all_message_var = env::var("RESPOND_TO_ALL_MESSAGES");
+
+        let mut respond_to_all_messages = false; // Default value if environment variable is not set
+
+        if let Ok(respond_to_all_message_var) = respond_to_all_message_var {
+            // Parse the environment variable value into a bool
+            respond_to_all_messages = match respond_to_all_message_var.as_str() {
+                "true" => true,
+                "false" => false,
+                _ => false,
+            };
+        }
+
+        if cleanedmessage.contains("dolly")
+            | cleanedmessage.contains("parton")
+            | cleanedmessage.contains(&bot_id.to_string())
+            | respond_to_all_messages
+        {
             if let Err(why) = msg
                 .channel_id
                 .say(
                     &ctx.http,
-                    commands::hidolly::run(format!("{}", msg.author), msg.content.replace(&bot_id.to_string(), "")).await,
+                    commands::hidolly::run(
+                        format!("{}", msg.author),
+                        msg.content.replace(&bot_id.to_string(), ""),
+                    )
+                    .await,
                 )
                 .await
             {

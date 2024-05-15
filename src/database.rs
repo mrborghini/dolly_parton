@@ -118,9 +118,6 @@ pub fn _add_context_to_dolly_ai(context: String) -> Result<(), mysql::Error> {
     let pool = _establish_connection()?;
     let mut conn = pool.get_conn()?;
 
-    let query = "TRUNCATE ai_dolly;";
-    let _ = conn.query_iter(query);
-
     let stmt = conn.prep("INSERT INTO ai_dolly (context) VALUES (?)")?;
     conn.exec_drop(&stmt, (context,))?;
 
@@ -158,7 +155,7 @@ pub fn _get_dolly_context() -> Result<Vec<i32>, mysql::Error> {
     let mut conn = pool.get_conn()?;
     let mut found_contexts: Vec<i32> = Vec::new();
 
-    let rows = conn.query_iter("SELECT context FROM ai_dolly")?;
+    let rows = conn.query_iter("SELECT context FROM ai_dolly WHERE id = (SELECT MAX(id) FROM ai_dolly);")?;
 
     for row in rows {
         let row = row?;
