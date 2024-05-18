@@ -92,7 +92,6 @@ pub async fn run(author: String, message: String) -> String {
     match ollama_system_message {
         Ok(message) => {
             chosen_system_message = message;
-            println!("{}", chosen_system_message);
         }
         Err(e) => {
             eprintln!("{}", e);
@@ -111,9 +110,12 @@ pub async fn run(author: String, message: String) -> String {
             return messages[random_number(0, messages.len() - 1)].clone();
         }
     }
+    let received_message = format!("{}: {}", author, message);
+
+    println!("received message: {}", received_message);
 
     let get_message = get_ai_message(
-        message,
+        received_message,
         final_url,
         chosen_model,
         chosen_system_message,
