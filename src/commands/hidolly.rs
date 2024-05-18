@@ -26,7 +26,8 @@ async fn get_ai_message(
         "model": ollama_model,
         "prompt": message,
         "system": ollama_system_message,
-        "context": contexts
+        "context": contexts,
+        "num_threads": 2,
     });
 
     let response_text = reqwest::Client::new()
@@ -110,9 +111,9 @@ pub async fn run(author: String, message: String) -> String {
             return messages[random_number(0, messages.len() - 1)].clone();
         }
     }
-    let received_message = format!("{}: {}", author, message);
+    let received_message = format!("{}: {}\n", author, message);
 
-    println!("received message: {}", received_message);
+    print!("received message: {}", received_message);
 
     let get_message = get_ai_message(
         received_message,
