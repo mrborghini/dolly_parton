@@ -1,6 +1,43 @@
-use crate::{_add_context_to_dolly_ai, _get_dolly_context, commands::randomnumber::*};
+use std::path::Path;
+use crate::commands::randomnumber::*;
 use serde_json::{json, Value};
+use std::fs::{self, File};
+use std::io::{Read, Write};
 use std::{env, error::Error};
+
+fn save_context(ctx: Vec<i32>) {
+    let context_path = "context.json";
+    let context_json = json!(ctx);
+
+    if let Err(e) = fs::create_dir_all("context") {
+        eprintln!("Failed to create directory: {}", e);
+        return;
+    }
+
+    let file_path = Path::new("context").join(context_path);
+    match File::create(&file_path) {
+        Ok(mut file) => {
+            if let Err(e) = file.write_all(context_json.to_string().as_bytes()) {
+                eprintln!("Failed to write context to file: {}", e);
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to create file: {}", e);
+        }
+    }
+}
+
+fn read_context() -> Result<Vec<i32>, Box<dyn Error>> {
+    let file_path = Path::new("context").join("context.json");
+    let mut file = File::open(&file_path)?;
+
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+
+    let context: Vec<i32> = serde_json::from_str(&contents)?;
+    println!("Successfully read contexts");
+    Ok(context)
+}
 
 async fn get_ai_message(
     message: String,
@@ -10,14 +47,12 @@ async fn get_ai_message(
 ) -> Result<String, Box<dyn Error>> {
     let mut contexts: Vec<i32> = Vec::new();
 
-    let received_contexts = _get_dolly_context();
-
-    match received_contexts {
+    match read_context() {
         Ok(ctx) => {
             contexts = ctx;
         }
         Err(e) => {
-            eprintln!("{}", e);
+            eprintln!("Error reading context from file: {}", e);
         }
     }
 
@@ -48,18 +83,17 @@ async fn get_ai_message(
         }
 
         if let Some(ctx) = response["context"].as_array() {
-            let ctx_i32: Vec<i32> = ctx
+            let mut ctx_i32: Vec<i32> = ctx
                 .iter()
                 .filter_map(|v| v.as_i64())
                 .map(|v| v as i32)
                 .collect();
 
-            let ctx_string = ctx_i32
-                .iter()
-                .map(|&x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(", ");
-            let _ = _add_context_to_dolly_ai(format!("[{}]", ctx_string));
+            for context in contexts.clone() {
+                ctx_i32.push(context);
+            }
+            
+            save_context(ctx_i32);
         }
     }
 

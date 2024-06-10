@@ -2,3 +2,4 @@
 .env
 Cargo.lock
 .env.test
+.DS_Store
