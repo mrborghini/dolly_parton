@@ -28,6 +28,8 @@ services:
       - RESPOND_TO_ALL_MESSAGES=${RESPOND_TO_ALL_MESSAGES}
     depends_on:
       - mariadb
-
+    volumes:
+      - ai_data:/context
 volumes:
   mariadb_data:
+  ai_data:
