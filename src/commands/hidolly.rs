@@ -83,15 +83,12 @@ async fn get_ai_message(
         }
 
         if let Some(ctx) = response["context"].as_array() {
-            let mut ctx_i32: Vec<i32> = ctx
+            let ctx_i32: Vec<i32> = ctx
                 .iter()
                 .filter_map(|v| v.as_i64())
                 .map(|v| v as i32)
                 .collect();
 
-            for context in contexts.clone() {
-                ctx_i32.push(context);
-            }
             
             save_context(ctx_i32);
         }
