@@ -104,7 +104,7 @@ impl EventHandler for Handler {
                     &ctx.http,
                     commands::hidolly::run(
                         format!("{}", msg.author),
-                        msg.content.replace(&bot_id.to_string(), ""),
+                        msg.content
                     )
                     .await,
                 )
