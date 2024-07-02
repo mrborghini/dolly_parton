@@ -20,7 +20,12 @@ pub fn _createdb(
                 println!("Attempt {}: {:?}", i + 1, err);
             }
         }
-        thread::sleep(time::Duration::from_secs(5));
+
+        if i != max_attempts - 1 {
+            thread::sleep(time::Duration::from_secs(5));
+        } else {
+            println!("Max attempts have been reached");
+        }
     }
 
     Err(Error::from(mysql::Error::from(io::Error::new(
@@ -155,7 +160,8 @@ pub fn _get_dolly_context() -> Result<Vec<i32>, mysql::Error> {
     let mut conn = pool.get_conn()?;
     let mut found_contexts: Vec<i32> = Vec::new();
 
-    let rows = conn.query_iter("SELECT context FROM ai_dolly WHERE id = (SELECT MAX(id) FROM ai_dolly);")?;
+    let rows =
+        conn.query_iter("SELECT context FROM ai_dolly WHERE id = (SELECT MAX(id) FROM ai_dolly);")?;
 
     for row in rows {
         let row = row?;
