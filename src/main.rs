@@ -95,7 +95,7 @@ impl EventHandler for Handler {
 
         let respond_to = env::var("RESPONDS_TO");
 
-        let respond_to_string: String;
+        let mut respond_to_string: String;
 
         match respond_to {
             Ok(responds_to) => {
@@ -106,10 +106,14 @@ impl EventHandler for Handler {
             }
         }
 
+        if respond_to_string == "" {
+            respond_to_string = "dolly".to_string();
+        }
+
         let the_message = respond_to_string;
 
 
-        if cleanedmessage.contains(&the_message)
+        if cleanedmessage.contains(&the_message.to_lowercase())
             | cleanedmessage.contains(&bot_id.to_string())
             | respond_to_all_messages
         {
