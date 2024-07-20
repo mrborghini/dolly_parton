@@ -46,7 +46,7 @@ pub fn run(author: String) -> String {
         }
         Err(err) => {
             eprintln!("Error: {}", err);
-            return "Something went wrong".to_string();
+            return morningmessages[random_number(0, morningmessages.len() - 1)].to_string();
         }
     }
 }
