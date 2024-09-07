@@ -1,5 +1,9 @@
 use std::{
-    env, fs::{self, OpenOptions}, io::Write, path::Path, time::{SystemTime, UNIX_EPOCH}
+    env,
+    fs::{self, OpenOptions},
+    io::Write,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use chrono::{Local, TimeZone, Utc};

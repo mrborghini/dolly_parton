@@ -260,15 +260,17 @@ impl AIDolly {
         let function_name = "get_ollama_message";
 
         if self.ollama_base_url == "" {
-            self.logger.error("Ollama url has not been set", function_name, Severity::Critical);
+            self.logger.error(
+                "Ollama url has not been set",
+                function_name,
+                Severity::Critical,
+            );
             return "Something went wrong 😭".to_string();
         }
 
         let mut conversation = self.load_conversation();
 
         conversation.add_message(msg.content.to_string(), msg.author.to_string());
-
-        
 
         let request_url = format!("{}/api/generate", self.ollama_base_url.clone());
 

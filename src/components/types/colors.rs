@@ -7,9 +7,19 @@ impl Colors {
     const ERROR: &'static str = "\x1b[91m";
     const NORMAL: &'static str = "\x1b[0m";
 
-    pub fn ok_blue() -> &'static str { Colors::OKBLUE }
-    pub fn ok_green() -> &'static str { Colors::OKGREEN }
-    pub fn warning() -> &'static str { Colors::WARNING }
-    pub fn error() -> &'static str { Colors::ERROR }
-    pub fn normal() -> &'static str { Colors::NORMAL }
+    pub fn ok_blue() -> &'static str {
+        Colors::OKBLUE
+    }
+    pub fn ok_green() -> &'static str {
+        Colors::OKGREEN
+    }
+    pub fn warning() -> &'static str {
+        Colors::WARNING
+    }
+    pub fn error() -> &'static str {
+        Colors::ERROR
+    }
+    pub fn normal() -> &'static str {
+        Colors::NORMAL
+    }
 }

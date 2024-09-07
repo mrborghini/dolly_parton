@@ -12,7 +12,7 @@ use messages::insult::Insult;
 use messages::message_handler::MessageHandler;
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
-use serenity::model::application::Interaction;
+use serenity::model::application::{Command, Interaction};
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
@@ -63,9 +63,13 @@ impl EventHandler for Handler {
                 "ping" => Some(commands::ping::run(&command.data.options())),
                 "rage" => Some(commands::rage::run(&command.data.options())),
                 _ => {
-                    self.logger.warning(format!("Invalid command: {}", command.data.name.as_str()).as_str(), function_name, Severity::Medium);
+                    self.logger.warning(
+                        format!("Invalid command: {}", command.data.name.as_str()).as_str(),
+                        function_name,
+                        Severity::Medium,
+                    );
                     Some("not implemented :(".to_string())
-                },
+                }
             };
 
             if let Some(content) = content {
@@ -107,13 +111,18 @@ impl EventHandler for Handler {
             function_name,
         );
         // Global commands
+        let guild_commands = [
+            Command::create_global_command(&ctx.http, ping::register()).await,
+            Command::create_global_command(&ctx.http, rage::register()).await,
+        ];
 
-        // let guild_command = Command::create_global_command(&ctx.http, ping::register()).await;
-
-        // self.logger.debug(
-        //     format!("I created the following global slash command: {guild_command:#?}").as_str(),
-        //     function_name,
-        // );
+        for guild_command in guild_commands {
+            self.logger.debug(
+                format!("I created the following global slash command: {guild_command:#?}")
+                    .as_str(),
+                function_name,
+            );
+        }
     }
 }
 
