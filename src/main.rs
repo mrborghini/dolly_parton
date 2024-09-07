@@ -167,11 +167,36 @@ async fn main() {
 
     let client_start_future = client.start();
 
+    // Handle signals
+    let ctrl_c_future = signal::ctrl_c();
+
+    #[cfg(unix)]
+    let mut sigterm_signal = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+        .expect("Unable to create SIGTERM listener");
+
+    #[cfg(unix)]
+    let sigterm_future = sigterm_signal.recv();
+
+    // Use a conditional compilation to make it cross-platform
+    #[cfg(unix)]
     select! {
         _ = client_start_future => {
             logger.info("Client has shut down.", function_name);
         },
-        _ = signal::ctrl_c() => {
+        _ = ctrl_c_future => {
+            logger.info("Ctrl-C has been pressed, shutting down...", function_name);
+        },
+        _ = sigterm_future => {
+            logger.info("SIGTERM received, shutting down...", function_name);
+        },
+    }
+
+    #[cfg(not(unix))]
+    select! {
+        _ = client_start_future => {
+            logger.info("Client has shut down.", function_name);
+        },
+        _ = ctrl_c_future => {
             logger.info("Ctrl-C has been pressed, shutting down...", function_name);
         },
     }
