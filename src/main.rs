@@ -2,7 +2,7 @@
 mod commands;
 mod components;
 mod messages;
-use commands::{ping, rage};
+use commands::{ping, quote, rage};
 use components::types::Severity;
 use components::{DotEnvReader, Logger};
 
@@ -62,6 +62,7 @@ impl EventHandler for Handler {
             let content = match command.data.name.as_str() {
                 "ping" => Some(commands::ping::run(&command.data.options())),
                 "rage" => Some(commands::rage::run(&command.data.options())),
+                "quote" => Some(commands::quote::run(&command.data.options()).await),
                 _ => {
                     self.logger.warning(
                         format!("Invalid command: {}", command.data.name.as_str()).as_str(),
@@ -103,7 +104,10 @@ impl EventHandler for Handler {
         );
 
         let commands = guild_id
-            .set_commands(&ctx.http, &[ping::register(), rage::register()])
+            .set_commands(
+                &ctx.http,
+                &[ping::register(), rage::register(), quote::register()],
+            )
             .await;
 
         self.logger.debug(
@@ -114,6 +118,7 @@ impl EventHandler for Handler {
         let guild_commands = [
             Command::create_global_command(&ctx.http, ping::register()).await,
             Command::create_global_command(&ctx.http, rage::register()).await,
+            Command::create_global_command(&ctx.http, quote::register()).await,
         ];
 
         for guild_command in guild_commands {
