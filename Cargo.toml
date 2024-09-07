@@ -11,4 +11,3 @@ dotenv = "0.15.0"
 serenity = { git = "https://github.com/serenity-rs/serenity.git", branch = "next", features = ["cache"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
-async-trait = "0.1"

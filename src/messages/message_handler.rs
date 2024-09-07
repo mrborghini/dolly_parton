@@ -1,4 +1,4 @@
-use async_trait::async_trait;
+use serenity::async_trait;
 use serenity::gateway::client::Context;
 use serenity::model::channel::Message;
 
