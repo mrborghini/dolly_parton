@@ -18,6 +18,8 @@ use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
 use std::env;
+use tokio::select;
+use tokio::signal;
 
 struct Handler {
     logger: Logger,
@@ -137,7 +139,6 @@ async fn main() {
     dotenv.parse_and_set_env();
 
     let function_name = "main";
-
     let logger = Logger::new("Main");
     logger.info("Starting up", function_name);
 
@@ -164,11 +165,16 @@ async fn main() {
         .await
         .expect("Err creating client");
 
-    if let Err(why) = client.start().await {
-        logger.error(
-            format!("Client error: {why:?}").as_str(),
-            function_name,
-            Severity::Critical,
-        );
+    let client_start_future = client.start();
+
+    select! {
+        _ = client_start_future => {
+            logger.info("Client has shut down.", function_name);
+        },
+        _ = signal::ctrl_c() => {
+            logger.info("Ctrl-C has been pressed, shutting down...", function_name);
+        },
     }
+
+    logger.info("Application shutting down gracefully.", function_name);
 }
