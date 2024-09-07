@@ -25,15 +25,18 @@ impl MessageHandler for Insult {
         let function_name = "respond";
 
         if msg.content == "!ping" {
-            if let Err(why) = msg.channel_id.say(&ctx.http, "Pong!").await {
-                self.logger.error(
-                    format!("Error sending message: {why:?}").as_str(),
-                    function_name,
-                    Severity::High,
-                );
-            }
+            match msg.channel_id.say(&ctx.http, "Pong!").await {
+                Ok(_) => return true,
+                Err(why) => {
+                    self.logger.error(
+                        format!("Error sending message: {why:?}").as_str(),
+                        function_name,
+                        Severity::High,
+                    );
+                    return false;
+                }
+            };
         }
-
-        return true;
+        return false;
     }
 }

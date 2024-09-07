@@ -1,8 +1,5 @@
 use std::{
-    env,
-    fs::OpenOptions,
-    io::Write,
-    time::{SystemTime, UNIX_EPOCH},
+    env, fs::{self, OpenOptions}, io::Write, path::Path, time::{SystemTime, UNIX_EPOCH}
 };
 
 use chrono::{Local, TimeZone, Utc};
@@ -16,9 +13,9 @@ pub struct Logger {
 
 impl Logger {
     /// Constructor
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `type_name` The struct/trait name.
     pub fn new<S: AsRef<str>>(type_name: S) -> Self {
         let type_name = type_name.as_ref().to_string();
@@ -26,9 +23,9 @@ impl Logger {
     }
 
     /// This function will log and write based on the environment.
-    /// 
+    ///
     ///  # Arguments
-    /// 
+    ///
     /// * `info` - All the info about the log that is being created.
     fn log(&self, mut info: Log) {
         info.application_name = env!("CARGO_PKG_NAME").to_string();
@@ -79,9 +76,9 @@ impl Logger {
     }
 
     /// This function will always log important info to the console.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `message` - The info you want to log.
     /// * `function_name` - The name of the function that you're logging from.
     pub fn info<S: AsRef<str>>(&self, message: S, function_name: S) {
@@ -101,12 +98,12 @@ impl Logger {
         self.log(info);
     }
 
-    /// This function will log debug info that is not really important, but can help find bugs. 
-    /// 
+    /// This function will log debug info that is not really important, but can help find bugs.
+    ///
     /// The messages can be hidden by adding `LOGGER_DEBUG=false` to your environment.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `message` - The debug info you want to log.
     /// * `function_name` - The name of the function that you're logging from.
     pub fn debug<S: AsRef<str>>(&self, message: S, function_name: S) {
@@ -129,7 +126,7 @@ impl Logger {
     /// This function will log warnings that are not very severe, but important.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `message` - The warning you want to log.
     /// * `function_name` - The name of the function that you're logging from.
     /// * `severity` - The severity of the warning.
@@ -153,7 +150,7 @@ impl Logger {
     /// This function will log errors that can be severe.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `message` - The error you want to log.
     /// * `function_name` - The name of the function that you're logging from.
     /// * `severity` - The severity of the error.
@@ -185,11 +182,10 @@ impl Logger {
         return since_the_epoch.as_secs();
     }
 
-
     /// This function will format the time into `year-month-day hour:minute:second`.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `unix_time` - the current timestamp in seconds
     fn format_time(&self, unix_time: u64) -> String {
         let utc_datetime = Utc
@@ -203,21 +199,32 @@ impl Logger {
     }
 
     /// This function will write logs to a file.
-    /// 
+    ///
     /// You can disable writing to a logfile by adding `WRITE_LOGS=false` to your environment.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `message` - The message that will be written to the file
     fn write_log(&self, message: String) {
         // Get the appropriate newline character based on the OS.
         let new_line = if cfg!(windows) { "\r\n" } else { "\n" };
 
+        // Define the directory path.
+        let dir_path = Path::new("out_data");
+
+        // Create the directory if it doesn't exist.
+        if !dir_path.exists() {
+            if let Err(e) = fs::create_dir_all(dir_path) {
+                eprintln!("Failed to create directory: {}", e);
+                return;
+            }
+        }
+
         let file = OpenOptions::new()
             .write(true)
             .append(true)
             .create(true)
-            .open("dolly.log");
+            .open(dir_path.join("dolly.log"));
 
         match file {
             Ok(mut f) => {

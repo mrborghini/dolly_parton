@@ -9,12 +9,11 @@ services:
       - GUILD_ID=${GUILD_ID}
       - OLLAMA_URL=${OLLAMA_URL}
       - OLLAMA_MODEL=${OLLAMA_MODEL}
-      - OLLAMA_SYSTEM_MESSAGE=${OLLAMA_SYSTEM_MESSAGE}
       - RESPOND_TO_ALL_MESSAGES=${RESPOND_TO_ALL_MESSAGES}
       - RESPONDS_TO=${RESPONDS_TO}
-      - LOGGER_DEBUG=false
-      - WRITE_LOGS=false
+      - LOGGER_DEBUG=${LOGGER_DEBUG}
+      - WRITE_LOGS=${WRITE_LOGS}
     volumes:
-      - ai_data:/context
+      - data:/out_data
 volumes:
-  ai_data:
+  data:

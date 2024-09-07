@@ -4,10 +4,9 @@ mod components;
 mod messages;
 use commands::{ping, rage};
 use components::types::Severity;
-use components::Logger;
+use components::{DotEnvReader, Logger};
 
 // Cargo components
-use dotenv::dotenv;
 use messages::ai_dolly::AIDolly;
 use messages::insult::Insult;
 use messages::message_handler::MessageHandler;
@@ -63,7 +62,10 @@ impl EventHandler for Handler {
             let content = match command.data.name.as_str() {
                 "ping" => Some(commands::ping::run(&command.data.options())),
                 "rage" => Some(commands::rage::run(&command.data.options())),
-                _ => Some("not implemented :(".to_string()),
+                _ => {
+                    self.logger.warning(format!("Invalid command: {}", command.data.name.as_str()).as_str(), function_name, Severity::Medium);
+                    Some("not implemented :(".to_string())
+                },
             };
 
             if let Some(content) = content {
@@ -117,7 +119,8 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
+    let dotenv = DotEnvReader::new(".env");
+    dotenv.parse_and_set_env();
 
     let function_name = "main";
 

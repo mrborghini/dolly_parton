@@ -3,5 +3,5 @@
 Cargo.lock
 .env.test
 .DS_Store
-ai.json
-dolly.log
+system_message.txt
+out_data
