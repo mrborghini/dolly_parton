@@ -144,7 +144,7 @@ impl AIDolly {
             logger,
             ollama_base_url,
             ollama_model,
-            responds_to_vec: responds_to_vec,
+            responds_to_vec,
             respond_to_all_messages,
             conversation_file,
             out_dir,
@@ -226,12 +226,21 @@ impl AIDolly {
                 return message;
             }
             Err(_) => {
-                self.logger.warning(
-                    "No system message found. Please create 'system_message.txt'",
-                    "read_system_message",
-                    Severity::High,
-                );
-                return read_to_string("system_message_example.txt").unwrap();
+                let path_dir = Path::new(&self.out_dir);
+
+                let out_data = read_to_string(path_dir.join("system_message.txt"));
+
+                match out_data {
+                    Ok(data) => return data,
+                    Err(_) => {
+                        self.logger.warning(
+                            "No system message found. Please create 'system_message.txt' using 'system_message_example.txt' as a backup",
+                            "read_system_message",
+                            Severity::High,
+                        );
+                        return read_to_string("system_message_example.txt").unwrap();
+                    }
+                }
             }
         }
     }

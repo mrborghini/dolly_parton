@@ -20,8 +20,14 @@ FROM alpine:latest AS final
 # Copy the executable from the "build" stage.
 COPY --from=build /usr/bin/server /usr/bin/
 
-# Check if the system_message.txt exists and copy it if it does
-COPY --from=build /app/system_message.txt /
+# Create out_dir
+RUN mkdir out_dir
+
+# Copy the example text to / as a backup
+COPY --from=build /app/system_message_example.txt /
+
+# Copy system_message.txt to /out_dir
+COPY --from=build /app/system_message.txt /out_dir
 
 # What the container should run when it is started.
 CMD ["/usr/bin/server"]
