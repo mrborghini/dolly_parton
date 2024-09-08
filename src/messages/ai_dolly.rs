@@ -263,7 +263,7 @@ impl AIDolly {
             self.logger.error(
                 "Ollama url has not been set",
                 function_name,
-                Severity::Critical,
+                Severity::High,
             );
             return "Something went wrong 😭".to_string();
         }
@@ -306,7 +306,7 @@ impl AIDolly {
                         self.logger.error(
                             format!("Could not request Ollama response: {}", why).as_str(),
                             function_name,
-                            Severity::Critical,
+                            Severity::High,
                         );
                         return "Something went wrong 😭".to_string();
                     }
@@ -316,7 +316,7 @@ impl AIDolly {
                 self.logger.error(
                     format!("Could not request Ollama response: {}", why).as_str(),
                     function_name,
-                    Severity::Critical,
+                    Severity::High,
                 );
                 return "Something went wrong 😭".to_string();
             }
