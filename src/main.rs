@@ -5,11 +5,9 @@ mod messages;
 use commands::{ping, quote, rage};
 use components::types::Severity;
 use components::{DotEnvReader, Logger};
+use messages::{AIDolly, Insult, MessageHandler, Ping};
 
 // Cargo components
-use messages::ai_dolly::AIDolly;
-use messages::insult::Insult;
-use messages::message_handler::MessageHandler;
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::model::application::{Command, Interaction};
@@ -180,8 +178,12 @@ async fn main() {
 
     let insult_handler = Insult::new();
     let ai_dolly_handler = AIDolly::new();
+    let ping_handler = Ping::new();
 
     handlers.push(Box::new(insult_handler));
+    handlers.push(Box::new(ping_handler));
+
+    // AI dolly should always be last
     handlers.push(Box::new(ai_dolly_handler));
 
     let mut client = Client::builder(&token, intents)

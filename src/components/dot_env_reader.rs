@@ -1,5 +1,5 @@
-use std::{collections::HashMap, env, fs::read_to_string};
 use super::Logger;
+use std::{collections::HashMap, env, fs::read_to_string};
 
 pub struct DotEnvReader {
     logger: Logger,

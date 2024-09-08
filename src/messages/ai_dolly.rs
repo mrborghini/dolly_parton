@@ -260,11 +260,8 @@ impl AIDolly {
         let function_name = "get_ollama_message";
 
         if self.ollama_base_url == "" {
-            self.logger.error(
-                "Ollama url has not been set",
-                function_name,
-                Severity::High,
-            );
+            self.logger
+                .error("Ollama url has not been set", function_name, Severity::High);
             return "Something went wrong 😭".to_string();
         }
 
