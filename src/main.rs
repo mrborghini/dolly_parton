@@ -98,34 +98,54 @@ impl EventHandler for Handler {
             function_name,
         );
 
-        let guild_id = GuildId::new(
-            env::var("GUILD_ID")
-                .expect("Expected GUILD_ID in environment")
-                .parse()
-                .expect("GUILD_ID must be an integer"),
-        );
+        let guild_id = match env::var("GUILD_ID") {
+            Ok(value) => {
+                match value.parse::<u64>() {
+                    Ok(parsed) => GuildId::new(parsed),
+                    Err(_) => {
+                        self.logger.warning(
+                            "GUILD_ID is not a valid number. Defaulting to '0'",
+                            function_name,
+                            Severity::Medium,
+                        );
+                        GuildId::new(0) // Default to 0 if parsing fails
+                    }
+                }
+            }
+            Err(_) => {
+                self.logger.debug(
+                    "GUILD_ID has not been set in the environment. Defaulting to '0'",
+                    function_name,
+                );
+                GuildId::new(0) // Default to 0 if the environment variable is not set
+            }
+        };
 
-        let commands = guild_id
-            .set_commands(
-                &ctx.http,
-                &[ping::register(), rage::register(), quote::register()],
-            )
-            .await;
+        // Only if guild_id is not 0 then create the guild commands
+        if guild_id != 0 {
+            let commands = guild_id
+                .set_commands(
+                    &ctx.http,
+                    &[ping::register(), rage::register(), quote::register()],
+                )
+                .await;
 
-        self.logger.debug(
-            format!("I now have the following guild slash commands: {commands:#?}").as_str(),
-            function_name,
-        );
+            self.logger.debug(
+                format!("I now have the following guild slash commands: {commands:#?}").as_str(),
+                function_name,
+            );
+        }
+
         // Global commands
-        let guild_commands = [
+        let global_commands = [
             Command::create_global_command(&ctx.http, ping::register()).await,
             Command::create_global_command(&ctx.http, rage::register()).await,
             Command::create_global_command(&ctx.http, quote::register()).await,
         ];
 
-        for guild_command in guild_commands {
+        for global_command in global_commands {
             self.logger.debug(
-                format!("I created the following global slash command: {guild_command:#?}")
+                format!("I created the following global slash command: {global_command:#?}")
                     .as_str(),
                 function_name,
             );
