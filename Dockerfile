@@ -4,7 +4,6 @@ FROM rust:alpine AS build
 ARG APP_NAME
 WORKDIR /app
 
-COPY .env .
 COPY system_message.txt .
 
 # Install host build dependencies.
@@ -22,7 +21,6 @@ COPY --from=build /usr/bin/server /usr/bin/
 
 # Check if the system_message.txt exists and copy it if it does
 COPY --from=build /app/system_message.txt /
-COPY --from=build /app/.env /
 
 # What the container should run when it is started.
 CMD ["/usr/bin/server"]
