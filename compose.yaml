@@ -1,16 +1,4 @@
 services:
-  mariadb:
-    image: mariadb:latest
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: dolly_parton
-      MYSQL_USER: jb
-      MYSQL_PASSWORD: password
-    volumes:
-      - mariadb_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
   server:
     restart: always
     build:
@@ -18,19 +6,14 @@ services:
       target: final
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
-      - SQL_USERNAME=${SQL_USERNAME}
-      - SQL_PASSWORD=${SQL_PASSWORD}
-      - HOSTNAME=${HOSTNAME}
       - GUILD_ID=${GUILD_ID}
       - OLLAMA_URL=${OLLAMA_URL}
       - OLLAMA_MODEL=${OLLAMA_MODEL}
-      - OLLAMA_SYSTEM_MESSAGE=${OLLAMA_SYSTEM_MESSAGE}
       - RESPOND_TO_ALL_MESSAGES=${RESPOND_TO_ALL_MESSAGES}
       - RESPONDS_TO=${RESPONDS_TO}
-    depends_on:
-      - mariadb
+      - LOGGER_DEBUG=${LOGGER_DEBUG}
+      - WRITE_LOGS=${WRITE_LOGS}
     volumes:
-      - ai_data:/context
+      - data:/out_data
 volumes:
-  mariadb_data:
-  ai_data:
+  data:

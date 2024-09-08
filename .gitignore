@@ -3,4 +3,5 @@
 Cargo.lock
 .env.test
 .DS_Store
-context/
+system_message.txt
+out_data
