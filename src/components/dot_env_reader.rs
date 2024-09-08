@@ -1,7 +1,4 @@
 use std::{collections::HashMap, env, fs::read_to_string};
-
-use crate::components::types::Severity;
-
 use super::Logger;
 
 pub struct DotEnvReader {
@@ -40,10 +37,9 @@ impl DotEnvReader {
         match read_to_string(&self.file_name) {
             Ok(content) => content,
             Err(e) => {
-                self.logger.warning(
+                self.logger.debug(
                     format!("Failed to read file: {}", e).as_str(),
                     "read_file_content",
-                    Severity::Medium,
                 );
                 return "".to_string();
             }

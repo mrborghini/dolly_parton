@@ -143,7 +143,14 @@ async fn main() {
     logger.info("Starting up", function_name);
 
     // Handle .env
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let token = env::var("DISCORD_TOKEN").unwrap_or_else(|_| {
+        logger.error(
+            "DISCORD_TOKEN not found in environment",
+            function_name,
+            Severity::Critical,
+        );
+        std::process::exit(1);
+    });
 
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
@@ -171,8 +178,9 @@ async fn main() {
     let ctrl_c_future = signal::ctrl_c();
 
     #[cfg(unix)]
-    let mut sigterm_signal = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-        .expect("Unable to create SIGTERM listener");
+    let mut sigterm_signal =
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("Unable to create SIGTERM listener");
 
     #[cfg(unix)]
     let sigterm_future = sigterm_signal.recv();
