@@ -52,7 +52,7 @@ pub struct AIDolly {
     logger: Logger,
     ollama_base_url: String,
     respond_to_all_messages: bool,
-    responds_to: String,
+    responds_to_vec: Vec<String>,
     ollama_model: String,
     out_dir: String,
     conversation_file: String,
@@ -122,6 +122,12 @@ impl AIDolly {
             })
             .to_lowercase();
 
+        let mut responds_to_vec: Vec<String> = Vec::new();
+
+        for respond in responds_to.split(",") {
+            responds_to_vec.push(respond.to_lowercase().to_string());
+        }
+
         // Respond to all messages
         let respond_to_all_messages = env::var("RESPOND_TO_ALL_MESSAGES")
             .unwrap_or_else(|_| {
@@ -138,7 +144,7 @@ impl AIDolly {
             logger,
             ollama_base_url,
             ollama_model,
-            responds_to,
+            responds_to_vec: responds_to_vec,
             respond_to_all_messages,
             conversation_file,
             out_dir,
@@ -319,6 +325,23 @@ impl AIDolly {
             }
         }
     }
+
+    fn remove_spaces(&self, input: String) -> String {
+        input.replace(" ", "")
+    }
+
+    fn contains_names(&self, message: String) -> bool {
+        for respond in &self.responds_to_vec {
+            if self
+                .remove_spaces(message.trim().to_string())
+                .contains(&self.remove_spaces(respond.trim().to_string()))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 #[async_trait]
@@ -333,7 +356,7 @@ impl MessageHandler for AIDolly {
         // Respond if the message contains the input from the RESPONDS_TO environment
         // Respond if the bot has been pinged inside of the message
         if self.respond_to_all_messages
-            || message.contains(&self.responds_to)
+            || self.contains_names(message.clone())
             || message.contains(bot_id)
         {
             self.logger.info("Using ollama to respond", function_name);
