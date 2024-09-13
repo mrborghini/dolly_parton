@@ -20,7 +20,7 @@ impl Logger {
     ///
     /// # Arguments
     ///
-    /// * `type_name` The struct/trait name.
+    /// * `type_name` - The struct/trait name.
     pub fn new<S: AsRef<str>>(type_name: S) -> Self {
         let type_name = type_name.as_ref().to_string();
         Self { type_name }

@@ -13,6 +13,13 @@ use crate::components::Logger;
 
 use super::message_handler::MessageHandler;
 
+/// This type contains some settings for Ollama
+/// 
+/// # Fields
+/// 
+/// * `model` - The model that's gonna be used. Like `llama3.1`
+/// * `prompt` - The string that's being sent to the api
+/// * `system` - System message as a string
 #[derive(Debug, Serialize)]
 struct OllamaBody {
     model: String,
@@ -21,23 +28,41 @@ struct OllamaBody {
     stream: bool,
 }
 
+/// Ollama response as a string
 #[derive(Debug, Deserialize)]
 struct OllamaResponse {
     response: String,
 }
 
+/// Ollama message stored in the json file
+/// 
+/// # fields
+/// 
+/// * `content` - String of the message
+/// * `Role` - String of the user id or assistant
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct OllamaMessage {
     content: String,
     role: String,
 }
 
+/// The whole conversation that gets stored
+/// 
+/// # fields
+/// 
+/// * `messages` - A vector of OllamaMessages
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct Conversation {
     messages: Vec<OllamaMessage>,
 }
 
 impl Conversation {
+    /// Adds message to the conversation
+    /// 
+    /// # Arguments
+    /// 
+    /// * `message` - The string of the messsage
+    /// * `role` - The string of the role. So either userid or assistant
     fn add_message(&mut self, message: String, role: String) {
         let ollama_message = OllamaMessage {
             content: message,
@@ -48,6 +73,17 @@ impl Conversation {
     }
 }
 
+/// This type will communicate with the Ollama api
+/// 
+/// # fields
+/// 
+/// `logger` - Used for logging information and errors
+/// `ollama_base_url` - The url to the ollama server
+/// `respond_to_all_messages` - A boolean to send messages to all messages it receives
+/// `responds_to_vec` - This is the type of messages it will always respond to
+/// `ollama_model` - The model that's gonna be used. Like `llama3.1`
+/// `out_dir` - The output directory of the json file
+/// `conversation_file` - The json file where it contains the whole conversation
 pub struct AIDolly {
     logger: Logger,
     ollama_base_url: String,
@@ -59,6 +95,7 @@ pub struct AIDolly {
 }
 
 impl AIDolly {
+    /// Constructor
     pub fn new() -> Self {
         let function_name = "new";
 
@@ -151,6 +188,11 @@ impl AIDolly {
         }
     }
 
+    /// This function will save the conversation to a json file
+    /// 
+    /// # Arguments
+    /// 
+    /// `conversation` - The whole conversation with OllamaMessages
     fn save_conversation(&self, conversation: Conversation) {
         let function_name = "save_conversation";
 
@@ -188,6 +230,7 @@ impl AIDolly {
         }
     }
 
+    /// This function will load the whole conversation from the json file
     fn load_conversation(&self) -> Conversation {
         let function_name = "load_conversation";
 
@@ -218,6 +261,7 @@ impl AIDolly {
         };
     }
 
+    /// This function will read the system message from system_message.txt
     fn read_system_message(&self) -> String {
         let system_message = read_to_string("system_message.txt");
 
@@ -245,6 +289,7 @@ impl AIDolly {
         }
     }
 
+    /// This function will format the prompt like: `role: message`
     fn format_into_prompt(&self, conversation: Conversation) -> String {
         let new_line = if cfg!(windows) { "\r\n" } else { "\n" };
         let mut output = String::new();
@@ -256,6 +301,12 @@ impl AIDolly {
         return output;
     }
 
+    /// This function will crop a string to a set limit in case the message is too long
+    /// 
+    /// # Arguments
+    /// 
+    /// * `input_string` - The string of the message to be cropped
+    /// * `limit` - The max length that the message will crop to
     fn crop_string(&self, input_string: &String, limit: usize) -> String {
         // Use char_indices to ensure we don't split a multi-byte character
         let mut end_index = input_string.len();
@@ -271,6 +322,11 @@ impl AIDolly {
         input_string[..end_index].to_string()
     }
 
+    /// This function will get a message from the ollama api
+    /// 
+    /// # Arguments
+    /// 
+    /// * `msg` - The original Discord message
     async fn get_ollama_message(&self, msg: &Message) -> String {
         let function_name = "get_ollama_message";
 
@@ -335,10 +391,20 @@ impl AIDolly {
         }
     }
 
+    /// This function just removes spaces
+    /// 
+    /// # Arguments
+    /// 
+    /// * `input` - The string you want to remove the spaces from.
     fn remove_spaces(&self, input: String) -> String {
         input.replace(" ", "")
     }
 
+    /// Check if message contains any string from `responds_to_vec`
+    /// 
+    /// # Arguments
+    /// 
+    /// * `message` - The string of the message you want to check for matches.
     fn contains_names(&self, message: String) -> bool {
         for respond in &self.responds_to_vec {
             if self
@@ -355,6 +421,12 @@ impl AIDolly {
 
 #[async_trait]
 impl MessageHandler for AIDolly {
+    /// This function will respond using a received message from discord using Ollama
+    /// 
+    /// # Arguments
+    /// 
+    /// * `ctx` - The context from where the message is from.
+    /// * `msg` - The message that has been received.
     async fn respond(&self, ctx: &Context, msg: &Message) -> bool {
         let function_name = "respond";
         let bot_id = &ctx.cache.current_user().id.to_string();
