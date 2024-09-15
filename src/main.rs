@@ -128,7 +128,12 @@ impl EventHandler for Handler {
             let commands = guild_id
                 .set_commands(
                     &ctx.http,
-                    &[ping::register(), rage::register(), quote::register(), clear_converstation::register()],
+                    &[
+                        ping::register(),
+                        rage::register(),
+                        quote::register(),
+                        clear_converstation::register(),
+                    ],
                 )
                 .await;
 

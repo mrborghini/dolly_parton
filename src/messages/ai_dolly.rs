@@ -425,8 +425,9 @@ impl AIDolly {
 
         let conversation_file = dir_path.join(self.conversation_file.clone());
 
-        if !conversation_file.exists(){
-            self.logger.warning("No conversation to delete.", function_name, Severity::Low);
+        if !conversation_file.exists() {
+            self.logger
+                .warning("No conversation to delete.", function_name, Severity::Low);
             return true;
         }
 
