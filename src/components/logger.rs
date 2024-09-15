@@ -69,13 +69,10 @@ impl Logger {
         }
 
         // Write to file
-        match env::var("WRITE_LOGS") {
-            Ok(value) => {
-                if value.to_lowercase() == "true" {
-                    self.write_log(message.clone());
-                }
+        if let Ok(value) = env::var("WRITE_LOGS") {
+            if value.to_lowercase() == "true" {
+                self.write_log(message.clone());
             }
-            Err(_) => {}
         }
     }
 
@@ -89,16 +86,17 @@ impl Logger {
         let message = message.as_ref().to_string();
         let function_name = function_name.as_ref().to_string();
 
-        let info = Log::new(
-            "".to_string(),
-            Severity::None,
-            LogType::Info,
-            0,
+        let info = Log {
+            application_name: "".to_string(),
+            severity: Severity::None,
+            log_type: LogType::Info,
+            time: 0,
             message,
-            self.type_name.clone(),
+            type_name: self.type_name.clone(),
             function_name,
-            "".to_string(),
-        );
+            app_version: "".to_string(),
+        };
+
         self.log(info);
     }
 
@@ -114,16 +112,16 @@ impl Logger {
         let message = message.as_ref().to_string();
         let function_name = function_name.as_ref().to_string();
 
-        let info = Log::new(
-            "".to_string(),
-            Severity::None,
-            LogType::Debug,
-            0,
+        let info = Log {
+            application_name: "".to_string(),
+            severity: Severity::None,
+            log_type: LogType::Debug,
+            time: 0,
             message,
-            self.type_name.clone(),
+            type_name: self.type_name.clone(),
             function_name,
-            "".to_string(),
-        );
+            app_version: "".to_string(),
+        };
         self.log(info);
     }
 
@@ -138,16 +136,16 @@ impl Logger {
         let message = message.as_ref().to_string();
         let function_name = function_name.as_ref().to_string();
 
-        let info = Log::new(
-            "".to_string(),
+        let info = Log {
+            application_name: "".to_string(),
             severity,
-            LogType::Warning,
-            0,
+            log_type: LogType::Warning,
+            time: 0,
             message,
-            self.type_name.clone(),
+            type_name: self.type_name.clone(),
             function_name,
-            "".to_string(),
-        );
+            app_version: "".to_string(),
+        };
         self.log(info);
     }
 
@@ -162,16 +160,16 @@ impl Logger {
         let message = message.as_ref().to_string();
         let function_name = function_name.as_ref().to_string();
 
-        let info = Log::new(
-            "".to_string(),
+        let info = Log {
+            application_name: "".to_string(),
             severity,
-            LogType::Error,
-            0,
+            log_type: LogType::Error,
+            time: 0,
             message,
-            self.type_name.clone(),
+            type_name: self.type_name.clone(),
             function_name,
-            "".to_string(),
-        );
+            app_version: "".to_string(),
+        };
         self.log(info);
     }
 
@@ -183,7 +181,7 @@ impl Logger {
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards");
 
-        return since_the_epoch.as_secs();
+        since_the_epoch.as_secs()
     }
 
     /// This function will format the time into `year-month-day hour:minute:second`.
@@ -225,17 +223,13 @@ impl Logger {
         }
 
         let file = OpenOptions::new()
-            .write(true)
             .append(true)
             .create(true)
             .open(dir_path.join("dolly.log"));
 
-        match file {
-            Ok(mut f) => {
-                let _ = f.write_all(format!("{}{}", message, new_line).as_bytes());
-                drop(f);
-            }
-            Err(_) => {}
+        if let Ok(mut f) = file {
+            let _ = f.write_all(format!("{}{}", message, new_line).as_bytes());
+            drop(f);
         }
     }
 }

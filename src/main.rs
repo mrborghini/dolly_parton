@@ -65,7 +65,7 @@ impl EventHandler for Handler {
                 "quote" => Some(commands::quote::run(&command.data.options()).await),
                 "clearconversation" => Some(commands::clear_converstation::run(
                     &command.data.options(),
-                    self.message_handlers.last().unwrap(),
+                    self.message_handlers.last().unwrap().as_ref(),
                 )),
                 _ => {
                     self.logger.warning(

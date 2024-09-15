@@ -212,6 +212,7 @@ impl AIDolly {
             .write(true)
             .append(false)
             .create(true)
+            .truncate(true)
             .open(dir_path.join(self.conversation_file.clone()));
 
         let json_string = serde_json::to_string_pretty(&conversation).unwrap();
@@ -242,7 +243,7 @@ impl AIDolly {
 
         match content {
             Ok(content) => {
-                let conversation: Conversation = serde_json::from_str(&content.as_str()).unwrap();
+                let conversation: Conversation = serde_json::from_str(content.as_str()).unwrap();
                 return conversation;
             }
             Err(_) => self.logger.warning(
@@ -256,9 +257,9 @@ impl AIDolly {
             ),
         }
 
-        return Conversation {
+        Conversation {
             messages: Vec::new(),
-        };
+        }
     }
 
     /// This function will read the system message from system_message.txt
@@ -266,23 +267,21 @@ impl AIDolly {
         let system_message = read_to_string("system_message.txt");
 
         match system_message {
-            Ok(message) => {
-                return message;
-            }
+            Ok(message) => message,
             Err(_) => {
                 let path_dir = Path::new(&self.out_dir);
 
                 let out_data = read_to_string(path_dir.join("system_message.txt"));
 
                 match out_data {
-                    Ok(data) => return data,
+                    Ok(data) => data,
                     Err(_) => {
                         self.logger.warning(
                             "No system message found. Please create 'system_message.txt' using 'system_message_example.txt' as a backup",
                             "read_system_message",
                             Severity::High,
                         );
-                        return read_to_string("system_message_example.txt").unwrap();
+                        read_to_string("system_message_example.txt").unwrap()
                     }
                 }
             }
@@ -298,7 +297,7 @@ impl AIDolly {
             output.push_str(format!("{}: {}{}", message.role, message.content, new_line).as_str());
         }
 
-        return output;
+        output
     }
 
     /// This function will crop a string to a set limit in case the message is too long
@@ -307,7 +306,7 @@ impl AIDolly {
     ///
     /// * `input_string` - The string of the message to be cropped
     /// * `limit` - The max length that the message will crop to
-    fn crop_string(&self, input_string: &String, limit: usize) -> String {
+    fn crop_string(&self, input_string: &str, limit: usize) -> String {
         // Use char_indices to ensure we don't split a multi-byte character
         let mut end_index = input_string.len();
 
@@ -330,7 +329,7 @@ impl AIDolly {
     async fn get_ollama_message(&self, msg: &Message) -> String {
         let function_name = "get_ollama_message";
 
-        if self.ollama_base_url == "" {
+        if self.ollama_base_url.is_empty() {
             self.logger
                 .error("Ollama url has not been set", function_name, Severity::High);
             return "Something went wrong 😭".to_string();
@@ -368,7 +367,7 @@ impl AIDolly {
                         conversation
                             .add_message(ollama_response.response.clone(), "assistant".to_string());
                         self.save_conversation(conversation);
-                        return self.crop_string(&ollama_response.response, 1950);
+                        self.crop_string(&ollama_response.response, 1950)
                     }
                     Err(why) => {
                         self.logger.error(
@@ -376,7 +375,7 @@ impl AIDolly {
                             function_name,
                             Severity::High,
                         );
-                        return "Something went wrong 😭".to_string();
+                        "Something went wrong 😭".to_string()
                     }
                 }
             }
@@ -386,7 +385,7 @@ impl AIDolly {
                     function_name,
                     Severity::High,
                 );
-                return "Something went wrong 😭".to_string();
+                "Something went wrong 😭".to_string()
             }
         }
     }
@@ -415,7 +414,7 @@ impl AIDolly {
             }
         }
 
-        return false;
+        false
     }
 
     /// Clears the conversation by removing the conversation json file
@@ -437,7 +436,7 @@ impl AIDolly {
             Ok(_) => {
                 self.logger
                     .info("Successfully cleared conversation", function_name);
-                return true;
+                true
             }
             Err(why) => {
                 self.logger.error(
@@ -445,7 +444,7 @@ impl AIDolly {
                     function_name,
                     Severity::Medium,
                 );
-                return false;
+                false
             }
         }
     }
@@ -494,6 +493,6 @@ impl MessageHandler for AIDolly {
 
     /// This function will clear the conversations
     fn clean_up(&self) -> bool {
-        return self.clear_conversation();
+        self.clear_conversation()
     }
 }

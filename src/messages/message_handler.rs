@@ -13,6 +13,6 @@ pub trait MessageHandler: Send + Sync {
     async fn respond(&self, ctx: &Context, msg: &Message) -> bool;
     /// This is a cleanup function for anything that needs to be removed
     fn clean_up(&self) -> bool {
-        return true;
+        true
     }
 }

@@ -41,7 +41,7 @@ impl DotEnvReader {
                     format!("Failed to read file: {}", e).as_str(),
                     "read_file_content",
                 );
-                return "".to_string();
+                "".to_string()
             }
         }
     }
