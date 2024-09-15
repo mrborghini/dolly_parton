@@ -11,7 +11,6 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -70,6 +69,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Download Linux artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: release-binary
+
+    - name: Download Windows artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: release-binary-windows
+
     - name: Install GitHub CLI
       run: sudo apt-get install -y gh
 
@@ -78,9 +87,9 @@ jobs:
 
     - name: Create GitHub Release
       run: |
-        gh release create v${{ github.run_number }} ./artifacts/dolly_parton ./artifacts/dolly_parton.exe \
+        gh release create v${{ github.run_number }} ./release-binary/dolly_parton ./release-binary-windows/dolly_parton.exe \
           --title "Release ${{ github.run_number }}" \
           --notes "Automated release"
 
     - name: Upload Release Asset
-      run: gh release upload v${{ github.run_number }} ./artifacts/dolly_parton ./artifacts/dolly_parton.exe
+      run: gh release upload v${{ github.run_number }} ./release-binary/dolly_parton ./release-binary-windows/dolly_parton.exe
