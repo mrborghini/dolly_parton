@@ -14,9 +14,9 @@ use crate::components::Logger;
 use super::message_handler::MessageHandler;
 
 /// This type contains some settings for Ollama
-/// 
+///
 /// # Fields
-/// 
+///
 /// * `model` - The model that's gonna be used. Like `llama3.1`
 /// * `prompt` - The string that's being sent to the api
 /// * `system` - System message as a string
@@ -35,9 +35,9 @@ struct OllamaResponse {
 }
 
 /// Ollama message stored in the json file
-/// 
+///
 /// # fields
-/// 
+///
 /// * `content` - String of the message
 /// * `Role` - String of the user id or assistant
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -47,9 +47,9 @@ struct OllamaMessage {
 }
 
 /// The whole conversation that gets stored
-/// 
+///
 /// # fields
-/// 
+///
 /// * `messages` - A vector of OllamaMessages
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct Conversation {
@@ -58,9 +58,9 @@ struct Conversation {
 
 impl Conversation {
     /// Adds message to the conversation
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `message` - The string of the messsage
     /// * `role` - The string of the role. So either userid or assistant
     fn add_message(&mut self, message: String, role: String) {
@@ -74,9 +74,9 @@ impl Conversation {
 }
 
 /// This type will communicate with the Ollama api
-/// 
+///
 /// # fields
-/// 
+///
 /// `logger` - Used for logging information and errors
 /// `ollama_base_url` - The url to the ollama server
 /// `respond_to_all_messages` - A boolean to send messages to all messages it receives
@@ -189,9 +189,9 @@ impl AIDolly {
     }
 
     /// This function will save the conversation to a json file
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// `conversation` - The whole conversation with OllamaMessages
     fn save_conversation(&self, conversation: Conversation) {
         let function_name = "save_conversation";
@@ -302,9 +302,9 @@ impl AIDolly {
     }
 
     /// This function will crop a string to a set limit in case the message is too long
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `input_string` - The string of the message to be cropped
     /// * `limit` - The max length that the message will crop to
     fn crop_string(&self, input_string: &String, limit: usize) -> String {
@@ -323,9 +323,9 @@ impl AIDolly {
     }
 
     /// This function will get a message from the ollama api
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `msg` - The original Discord message
     async fn get_ollama_message(&self, msg: &Message) -> String {
         let function_name = "get_ollama_message";
@@ -392,18 +392,18 @@ impl AIDolly {
     }
 
     /// This function just removes spaces
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `input` - The string you want to remove the spaces from.
     fn remove_spaces(&self, input: String) -> String {
         input.replace(" ", "")
     }
 
     /// Check if message contains any string from `responds_to_vec`
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `message` - The string of the message you want to check for matches.
     fn contains_names(&self, message: String) -> bool {
         for respond in &self.responds_to_vec {
@@ -417,14 +417,45 @@ impl AIDolly {
 
         return false;
     }
+
+    /// Clears the conversation by removing the conversation json file
+    pub fn clear_conversation(&self) -> bool {
+        let function_name = "clear_conversation";
+        let dir_path = Path::new(&self.out_dir);
+
+        let conversation_file = dir_path.join(self.conversation_file.clone());
+
+        if !conversation_file.exists(){
+            self.logger.warning("No conversation to delete.", function_name, Severity::Low);
+            return true;
+        }
+
+        let result = fs::remove_file(conversation_file);
+
+        match result {
+            Ok(_) => {
+                self.logger
+                    .info("Successfully cleared conversation", function_name);
+                return true;
+            }
+            Err(why) => {
+                self.logger.error(
+                    format!("Could not delete conversation: {}", why).as_str(),
+                    function_name,
+                    Severity::Medium,
+                );
+                return false;
+            }
+        }
+    }
 }
 
 #[async_trait]
 impl MessageHandler for AIDolly {
     /// This function will respond using a received message from discord using Ollama
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `ctx` - The context from where the message is from.
     /// * `msg` - The message that has been received.
     async fn respond(&self, ctx: &Context, msg: &Message) -> bool {
@@ -458,5 +489,10 @@ impl MessageHandler for AIDolly {
             }
         }
         return false;
+    }
+
+    /// This function will clear the conversations
+    fn clean_up(&self) -> bool {
+        return self.clear_conversation();
     }
 }

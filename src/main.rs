@@ -2,7 +2,7 @@
 mod commands;
 mod components;
 mod messages;
-use commands::{ping, quote, rage};
+use commands::{clear_converstation, ping, quote, rage};
 use components::types::Severity;
 use components::{DotEnvReader, Logger};
 use messages::{AIDolly, Insult, MessageHandler, Ping};
@@ -63,6 +63,10 @@ impl EventHandler for Handler {
                 "ping" => Some(commands::ping::run(&command.data.options())),
                 "rage" => Some(commands::rage::run(&command.data.options())),
                 "quote" => Some(commands::quote::run(&command.data.options()).await),
+                "clearconversation" => Some(commands::clear_converstation::run(
+                    &command.data.options(),
+                    self.message_handlers.last().unwrap(),
+                )),
                 _ => {
                     self.logger.warning(
                         format!("Invalid command: {}", command.data.name.as_str()).as_str(),
@@ -139,6 +143,7 @@ impl EventHandler for Handler {
             Command::create_global_command(&ctx.http, ping::register()).await,
             Command::create_global_command(&ctx.http, rage::register()).await,
             Command::create_global_command(&ctx.http, quote::register()).await,
+            Command::create_global_command(&ctx.http, clear_converstation::register()).await,
         ];
 
         for global_command in global_commands {
