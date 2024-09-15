@@ -94,4 +94,4 @@ jobs:
           --notes "Automated release"
 
     - name: Upload Release Asset
-      run: gh release upload v${{ github.run_number }} ./release-binary/dolly_parton ./release-binary-windows/dolly_parton.exe
+      run: gh release upload v${{ github.run_number }} ./release-binary-linux/dolly_parton ./release-binary-windows/dolly_parton.exe
