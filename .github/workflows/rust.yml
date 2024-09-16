@@ -10,6 +10,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   ACTIONS_RUNNER_DEBUG: true # Enable detailed logging for GitHub Actions runner
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   build:
@@ -109,20 +110,11 @@ jobs:
     - name: Install GitHub CLI
       run: sudo apt-get install -y gh
 
-    - name: Authenticate with GitHub CLI
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: gh auth login --with-token
-
     - name: Create GitHub Release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh release create v${{ github.run_number }} ./release-binary-linux/dolly_parton ./release-binary-windows/dolly_parton.exe \
           --title "Release ${{ github.run_number }}" \
           --notes "Automated release"
 
     - name: Upload Release Asset
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: gh release upload v${{ github.run_number }} ./release-binary-linux/dolly_parton ./release-binary-windows/dolly_parton.exe
