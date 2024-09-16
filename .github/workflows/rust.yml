@@ -23,7 +23,7 @@ jobs:
       id: extract_version
       run: |
         version=$(grep '^version =' Cargo.toml | sed 's/version = \"//;s/\"//')
-        echo "::set-output name=version::$version"
+        echo "version=$version" >> $GITHUB_OUTPUT
 
   build:
     needs: extract-version
