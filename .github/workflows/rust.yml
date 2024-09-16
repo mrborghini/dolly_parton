@@ -110,6 +110,8 @@ jobs:
       run: sudo apt-get install -y gh
 
     - name: Check GitHub API rate limit
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: gh api rate_limit # Debug: Check the GitHub API rate limit before creating release
 
     - name: Authenticate with GitHub CLI
