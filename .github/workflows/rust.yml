@@ -37,7 +37,7 @@ jobs:
     - name: Create release artifact
       run: |
         mkdir -p artifacts
-        cp target/release/dolly_parton artifacts/
+        cp target/release/dolly_parton artifacts/dolly_parton-x86_64-Linux
 
     - name: Verify artifact creation
       run: ls -la artifacts # Debug: Verify that the artifact was copied correctly
@@ -72,7 +72,7 @@ jobs:
     - name: Create release artifact
       run: |
         mkdir artifacts
-        copy target\release\dolly_parton.exe artifacts\
+        copy target\release\dolly_parton.exe artifacts\dolly_parton-x86_64-Windows.exe
 
     - name: Verify artifact creation
       run: dir artifacts # Debug: Verify that the artifact was copied correctly (Windows)
@@ -112,15 +112,15 @@ jobs:
 
     - name: Delete existing release assets (if any)
       run: |
-        gh release delete-asset v${{ github.run_number }} dolly_parton || true
-        gh release delete-asset v${{ github.run_number }} dolly_parton.exe || true
+        gh release delete-asset v${{ github.run_number }} dolly_parton-x86_64-Linux || true
+        gh release delete-asset v${{ github.run_number }} dolly_parton-x86_64-Windows.exe || true
    
     - name: Create GitHub Release
       run: |
-        gh release create v${{ github.run_number }} ./release-binary-linux/dolly_parton ./release-binary-windows/dolly_parton.exe \
+        gh release create v${{ github.run_number }} ./release-binary-linux/dolly_parton-x86_64-Linux ./release-binary-windows/dolly_parton-x86_64-Windows.exe \
           --title "Release ${{ github.run_number }}" \
           --notes "Automated release"
    
 
     - name: Upload Release Asset
-      run: gh release upload v${{ github.run_number }} ./release-binary-linux/dolly_parton ./release-binary-windows/dolly_parton.exe
+      run: gh release upload v${{ github.run_number }} ./release-binary-linux/dolly_parton-x86_64-Linux ./release-binary-windows/dolly_parton-x86_64-Windows.exe
