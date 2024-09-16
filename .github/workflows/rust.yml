@@ -7,14 +7,26 @@ on:
     branches: [ "master" ]
   workflow_dispatch: # Allows manual triggering of the workflow
 
-env:
-  CARGO_TERM_COLOR: always
-  ACTIONS_RUNNER_DEBUG: true # Enable detailed logging for GitHub Actions runner
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
-  build:
+  extract-version:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract_version.outputs.version }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Extract version from Cargo.toml
+      id: extract_version
+      run: |
+        version=$(grep '^version =' Cargo.toml | sed 's/version = \"//;s/\"//')
+        echo "::set-output name=version::$version"
+
+  build:
+    needs: extract-version
+    runs-on: ubuntu-latest
+    env:
+      CARGO_VERSION: ${{ needs.extract-version.outputs.version }}
 
     steps:
     - uses: actions/checkout@v4
@@ -49,7 +61,10 @@ jobs:
         path: artifacts/
 
   windows-build:
+    needs: extract-version
     runs-on: windows-latest
+    env:
+      CARGO_VERSION: ${{ needs.extract-version.outputs.version }}
 
     steps:
     - uses: actions/checkout@v4
@@ -84,8 +99,10 @@ jobs:
         path: artifacts/
 
   release:
+    needs: [build, windows-build, extract-version]
     runs-on: ubuntu-latest
-    needs: [build, windows-build]
+    env:
+      CARGO_VERSION: ${{ needs.extract-version.outputs.version }}
 
     steps:
     - uses: actions/checkout@v4
@@ -112,11 +129,11 @@ jobs:
 
     - name: Delete existing release assets (if any)
       run: |
-        gh release delete-asset v${{ github.run_number }} dolly_parton-x86_64-Linux || true
-        gh release delete-asset v${{ github.run_number }} dolly_parton-x86_64-Windows.exe || true
-   
+        gh release delete-asset v${{ env.CARGO_VERSION }} dolly_parton-x86_64-Linux || true
+        gh release delete-asset v${{ env.CARGO_VERSION }} dolly_parton-x86_64-Windows.exe || true
+
     - name: Create GitHub Release
       run: |
-        gh release create v${{ github.run_number }} ./release-binary-linux/dolly_parton-x86_64-Linux ./release-binary-windows/dolly_parton-x86_64-Windows.exe \
-          --title "Release ${{ github.run_number }}" \
+        gh release create v${{ env.CARGO_VERSION }} ./release-binary-linux/dolly_parton-x86_64-Linux ./release-binary-windows/dolly_parton-x86_64-Windows.exe \
+          --title "Release ${{ env.CARGO_VERSION }}" \
           --notes "Automated release"
