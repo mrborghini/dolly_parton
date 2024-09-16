@@ -120,7 +120,3 @@ jobs:
         gh release create v${{ github.run_number }} ./release-binary-linux/dolly_parton-x86_64-Linux ./release-binary-windows/dolly_parton-x86_64-Windows.exe \
           --title "Release ${{ github.run_number }}" \
           --notes "Automated release"
-   
-
-    - name: Upload Release Asset
-      run: gh release upload v${{ github.run_number }} ./release-binary-linux/dolly_parton-x86_64-Linux ./release-binary-windows/dolly_parton-x86_64-Windows.exe
