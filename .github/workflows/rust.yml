@@ -5,9 +5,11 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch: # Allows manual triggering of the workflow
 
 env:
   CARGO_TERM_COLOR: always
+  ACTIONS_RUNNER_DEBUG: true # Enable detailed logging for GitHub Actions runner
 
 jobs:
   build:
@@ -19,16 +21,25 @@ jobs:
     - name: Install Rust
       run: rustup update stable
 
+    - name: Print environment
+      run: env # Debug: Print environment variables
+
     - name: Build
       run: cargo build --release --verbose
+
+    - name: List build directory
+      run: ls -la target/release # Debug: List the contents of the release directory to verify the build
 
     - name: Run tests
       run: cargo test --verbose
 
     - name: Create release artifact
       run: |
-        mkdir artifacts
+        mkdir -p artifacts
         cp target/release/dolly_parton artifacts/
+
+    - name: Verify artifact creation
+      run: ls -la artifacts # Debug: Verify that the artifact was copied correctly
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -45,8 +56,14 @@ jobs:
     - name: Install Rust
       run: rustup update stable
 
+    - name: Print environment
+      run: env # Debug: Print environment variables
+
     - name: Build
       run: cargo build --release --verbose
+
+    - name: List build directory
+      run: dir target\release # Debug: List the contents of the release directory to verify the build (Windows)
 
     - name: Run tests
       run: cargo test --verbose
@@ -54,7 +71,10 @@ jobs:
     - name: Create release artifact
       run: |
         mkdir artifacts
-        cp target/release/dolly_parton.exe artifacts/
+        copy target\release\dolly_parton.exe artifacts\
+
+    - name: Verify artifact creation
+      run: dir artifacts # Debug: Verify that the artifact was copied correctly (Windows)
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -81,11 +101,19 @@ jobs:
         name: release-binary-windows
         path: ./release-binary-windows
 
+    - name: List downloaded artifacts
+      run: |
+        ls -la ./release-binary-linux
+        ls -la ./release-binary-windows # Debug: Verify the downloaded artifacts
+
     - name: Install GitHub CLI
       run: sudo apt-get install -y gh
 
+    - name: Check GitHub API rate limit
+      run: gh api rate_limit # Debug: Check the GitHub API rate limit before creating release
+
     - name: Authenticate with GitHub CLI
-      run: gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
     - name: Create GitHub Release
       run: |
