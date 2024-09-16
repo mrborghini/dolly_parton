@@ -114,12 +114,12 @@ jobs:
 
     - name: Authenticate with GitHub CLI
       env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
       run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
     - name: Create GitHub Release
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ github.token }}
       run: |
         gh release create v${{ github.run_number }} ./release-binary-linux/dolly_parton ./release-binary-windows/dolly_parton.exe \
           --title "Release ${{ github.run_number }}" \
@@ -127,5 +127,5 @@ jobs:
 
     - name: Upload Release Asset
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ github.token }}
       run: gh release upload v${{ github.run_number }} ./release-binary-linux/dolly_parton ./release-binary-windows/dolly_parton.exe
