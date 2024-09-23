@@ -239,11 +239,17 @@ impl AIDolly {
 
         let conversation_file = dir_path.join(self.conversation_file.clone());
 
+        self.logger.debug(
+            format!("{:?}", conversation_file.as_os_str()).as_str(),
+            function_name,
+        );
+
         let content = read_to_string(&conversation_file);
 
         match content {
             Ok(content) => {
                 let conversation: Conversation = serde_json::from_str(content.as_str()).unwrap();
+                self.logger.debug(format!("{:#?}", conversation).as_str(), function_name);
                 return conversation;
             }
             Err(_) => self.logger.warning(
@@ -257,17 +263,23 @@ impl AIDolly {
             ),
         }
 
-        Conversation {
+        let conversation = Conversation {
             messages: Vec::new(),
-        }
+        };
+
+        conversation
     }
 
     /// This function will read the system message from system_message.txt
     fn read_system_message(&self) -> String {
+        let function_name = "read_system_message";
         let system_message = read_to_string("system_message.txt");
 
         match system_message {
-            Ok(message) => message,
+            Ok(message) => {
+                self.logger.debug(message.as_str(), function_name);
+                message
+            },
             Err(_) => {
                 let path_dir = Path::new(&self.out_dir);
 
@@ -281,7 +293,9 @@ impl AIDolly {
                             "read_system_message",
                             Severity::High,
                         );
-                        read_to_string("system_message_example.txt").unwrap()
+                        let system_message = read_to_string("system_message_example.txt").unwrap();
+                        self.logger.debug(system_message.as_str(), function_name);
+                        system_message
                     }
                 }
             }
@@ -290,6 +304,7 @@ impl AIDolly {
 
     /// This function will format the prompt like: `role: message`
     fn format_into_prompt(&self, conversation: Conversation) -> String {
+        let function_name = "format_into_prompt";
         let new_line = if cfg!(windows) { "\r\n" } else { "\n" };
         let mut output = String::new();
 
@@ -297,6 +312,7 @@ impl AIDolly {
             output.push_str(format!("{}: {}{}", message.role, message.content, new_line).as_str());
         }
 
+        self.logger.debug(output.as_str(), function_name);
         output
     }
 
@@ -367,7 +383,11 @@ impl AIDolly {
                         conversation
                             .add_message(ollama_response.response.clone(), "assistant".to_string());
                         self.save_conversation(conversation);
-                        self.crop_string(&ollama_response.response, 1950)
+                        let response = self.crop_string(&ollama_response.response, 1950);
+
+                        self.logger
+                            .debug(format!("Reponse: {}", response).as_str(), function_name);
+                        response
                     }
                     Err(why) => {
                         self.logger.error(
@@ -424,6 +444,11 @@ impl AIDolly {
 
         let conversation_file = dir_path.join(self.conversation_file.clone());
 
+        self.logger.debug(
+            format!("{:?}", conversation_file.as_os_str()).as_str(),
+            function_name,
+        );
+
         if !conversation_file.exists() {
             self.logger
                 .warning("No conversation to delete.", function_name, Severity::Low);
@@ -463,6 +488,11 @@ impl MessageHandler for AIDolly {
         let bot_id = &ctx.cache.current_user().id.to_string();
 
         let message = msg.content.to_lowercase();
+
+        self.logger.debug(
+            format!("The message was formatted: {}", message).as_str(),
+            function_name,
+        );
 
         // Respond if responding to all messages is on.
         // Respond if the message contains the input from the RESPONDS_TO environment
