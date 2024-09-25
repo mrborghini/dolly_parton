@@ -263,11 +263,11 @@ impl AIDolly {
             ),
         }
 
-        let conversation = Conversation {
-            messages: Vec::new(),
-        };
+        
 
-        conversation
+        Conversation {
+            messages: Vec::new(),
+        }
     }
 
     /// This function will read the system message from system_message.txt
