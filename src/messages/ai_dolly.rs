@@ -63,13 +63,35 @@ impl Conversation {
     ///
     /// * `message` - The string of the messsage
     /// * `role` - The string of the role. So either userid or assistant
-    fn add_message(&mut self, message: String, role: String) {
+    fn add_message(&mut self, message: String, role: String, max_messages: i32) {
+        self.trim_messages(max_messages);
         let ollama_message = OllamaMessage {
             content: message,
             role,
         };
 
         self.messages.push(ollama_message);
+    }
+
+    fn trim_messages(&mut self, max_messages: i32) {
+        if max_messages == 0 {
+            return;
+        }
+
+        if self.messages.len() as i32 == max_messages - 1 {
+            self.messages.remove(0);
+            return;
+        }
+
+        if self.messages.len() as i32 > max_messages - 1 {
+            for _ in self.messages.clone() {
+                if self.messages.len() as i32 == max_messages - 1 {
+                    return;
+                }
+
+                self.messages.remove(0);
+            }
+        }
     }
 }
 
@@ -92,6 +114,7 @@ pub struct AIDolly {
     ollama_model: String,
     out_dir: String,
     conversation_file: String,
+    max_stored_messages: i32,
 }
 
 impl AIDolly {
@@ -142,6 +165,35 @@ impl AIDolly {
             default_model
         });
 
+        let max_stored_messages: i32 = env::var("MAX_STORED_MESSAGES")
+            .unwrap_or_else(|_| {
+                let default_amount = 6;
+                logger.error(
+                    format!(
+                        "MAX_STORED_MESSAGES has not been set in the environment. Defaulting to {}",
+                        default_amount
+                    )
+                    .as_str(),
+                    function_name,
+                    Severity::Medium,
+                );
+                default_amount.to_string() // Convert to String for parse.
+            })
+            .parse()
+            .unwrap_or_else(|_| {
+                let fallback_amount = 6;
+                logger.error(
+                    format!(
+                        "MAX_STORED_MESSAGES is an invalid number. Defaulting to {}",
+                        fallback_amount
+                    )
+                    .as_str(),
+                    function_name,
+                    Severity::Medium,
+                );
+                fallback_amount
+            });
+
         // Responds to
         let responds_to = env::var("RESPONDS_TO")
             .unwrap_or_else(|_| {
@@ -185,6 +237,7 @@ impl AIDolly {
             respond_to_all_messages,
             conversation_file,
             out_dir,
+            max_stored_messages,
         }
     }
 
@@ -249,7 +302,8 @@ impl AIDolly {
         match content {
             Ok(content) => {
                 let conversation: Conversation = serde_json::from_str(content.as_str()).unwrap();
-                self.logger.debug(format!("{:#?}", conversation).as_str(), function_name);
+                self.logger
+                    .debug(format!("{:#?}", conversation).as_str(), function_name);
                 return conversation;
             }
             Err(_) => self.logger.warning(
@@ -262,8 +316,6 @@ impl AIDolly {
                 Severity::None,
             ),
         }
-
-        
 
         Conversation {
             messages: Vec::new(),
@@ -279,7 +331,7 @@ impl AIDolly {
             Ok(message) => {
                 self.logger.debug(message.as_str(), function_name);
                 message
-            },
+            }
             Err(_) => {
                 let path_dir = Path::new(&self.out_dir);
 
@@ -353,7 +405,11 @@ impl AIDolly {
 
         let mut conversation = self.load_conversation();
 
-        conversation.add_message(msg.content.to_string(), msg.author.to_string());
+        conversation.add_message(
+            msg.content.to_string(),
+            msg.author.to_string(),
+            self.max_stored_messages,
+        );
 
         let request_url = format!("{}/api/generate", self.ollama_base_url.clone());
 
@@ -380,8 +436,11 @@ impl AIDolly {
 
                 match response_json {
                     Ok(ollama_response) => {
-                        conversation
-                            .add_message(ollama_response.response.clone(), "assistant".to_string());
+                        conversation.add_message(
+                            ollama_response.response.clone(),
+                            "assistant".to_string(),
+                            self.max_stored_messages,
+                        );
                         self.save_conversation(conversation);
                         let response = self.crop_string(&ollama_response.response, 1950);
 
