@@ -469,13 +469,19 @@ impl AIDolly {
         }
     }
 
-    /// This function just removes spaces
+    /// This function removes special chars
     ///
     /// # Arguments
     ///
-    /// * `input` - The string you want to remove the spaces from.
-    fn remove_spaces(&self, input: String) -> String {
-        input.replace(" ", "")
+    /// * `input` - The string you want to remove the special chars from.
+    fn remove_special_chars(&self, mut input: String) -> String {
+        let special_chars: Vec<char> = "\\,.!/()@#$%^&*(){{|?'\"<>-+=:;[]}}\n\r ".chars().collect();
+
+        for special_char in special_chars {
+            input = input.replace(special_char, "");
+        }
+
+        input
     }
 
     /// Check if message contains any string from `responds_to_vec`
@@ -485,10 +491,23 @@ impl AIDolly {
     /// * `message` - The string of the message you want to check for matches.
     fn contains_names(&self, message: String) -> bool {
         for respond in &self.responds_to_vec {
-            if self
-                .remove_spaces(message.trim().to_string())
-                .contains(&self.remove_spaces(respond.trim().to_string()))
-            {
+            let cleaned_message = self.remove_special_chars(message.clone());
+            let cleaned_responds = self.remove_special_chars(respond.clone());
+
+            // Prevent it to respond to everything
+            if cleaned_responds == "" {
+                continue;
+            }
+
+            if respond.starts_with("=") {
+                if cleaned_message.clone() == cleaned_responds.clone() {
+                    return true;
+                } else {
+                    continue;
+                }
+            }
+
+            if cleaned_message.contains(&cleaned_responds) {
                 return true;
             }
         }
