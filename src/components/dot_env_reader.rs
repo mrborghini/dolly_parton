@@ -51,7 +51,8 @@ impl DotEnvReader {
         let func_name = "parse_lines";
 
         for line in content.lines() {
-            let trimmed_line = line.trim();
+            let split_line: Vec<&str> = line.split("#").collect();
+            let trimmed_line = split_line[0].trim();
 
             // Skip empty lines and comments
             if trimmed_line.is_empty() || trimmed_line.starts_with('#') {
