@@ -23,15 +23,14 @@ use super::message_handler::MessageHandler;
 #[derive(Debug, Serialize)]
 struct OllamaBody {
     model: String,
-    prompt: String,
-    system: String,
+    messages: Vec<OllamaMessage>,
     stream: bool,
 }
 
 /// Ollama response as a string
 #[derive(Debug, Deserialize)]
 struct OllamaResponse {
-    response: String,
+    message: OllamaMessage,
 }
 
 /// Ollama message stored in the json file
@@ -355,17 +354,24 @@ impl AIDolly {
     }
 
     /// This function will format the prompt like: `role: message`
-    fn format_into_prompt(&self, conversation: Conversation) -> String {
+    fn format_into_prompt(&self, conversation: Conversation) -> Vec<OllamaMessage> {
         let function_name = "format_into_prompt";
-        let new_line = if cfg!(windows) { "\r\n" } else { "\n" };
-        let mut output = String::new();
+
+        let mut messages: Vec<OllamaMessage> = Vec::new();
+
+        let system_message = OllamaMessage {
+            role: "system".to_string(),
+            content: self.read_system_message(),
+        };
+
+        messages.push(system_message);
 
         for message in conversation.messages {
-            output.push_str(format!("{}: {}{}", message.role, message.content, new_line).as_str());
+            messages.push(message.clone());
+            self.logger.debug(format!("{}: {}", message.role, message.content).as_str(), function_name);
         }
 
-        self.logger.debug(output.as_str(), function_name);
-        output
+        messages
     }
 
     /// This function will crop a string to a set limit in case the message is too long
@@ -406,19 +412,18 @@ impl AIDolly {
         let mut conversation = self.load_conversation();
 
         conversation.add_message(
-            msg.content.to_string(),
-            msg.author.to_string(),
+            format!("{}: {}", msg.author, msg.content.to_string()),
+            "user".to_string(),
             self.max_stored_messages,
         );
 
-        let request_url = format!("{}/api/generate", self.ollama_base_url.clone());
+        let request_url = format!("{}/api/chat", self.ollama_base_url.clone());
 
         self.logger.debug(request_url.as_str(), function_name);
 
         let prompt_data = OllamaBody {
             model: self.ollama_model.clone(),
-            prompt: self.format_into_prompt(conversation.clone()),
-            system: self.read_system_message(),
+            messages: self.format_into_prompt(conversation.clone()),
             stream: false,
         };
 
@@ -437,12 +442,12 @@ impl AIDolly {
                 match response_json {
                     Ok(ollama_response) => {
                         conversation.add_message(
-                            ollama_response.response.clone(),
-                            "assistant".to_string(),
+                            ollama_response.message.content.clone(),
+                            ollama_response.message.role,
                             self.max_stored_messages,
                         );
                         self.save_conversation(conversation);
-                        let response = self.crop_string(&ollama_response.response, 1950);
+                        let response = self.crop_string(&ollama_response.message.content, 1950);
 
                         self.logger
                             .debug(format!("Reponse: {}", response).as_str(), function_name);
