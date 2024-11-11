@@ -1,6 +1,5 @@
 /target
 .env
-Cargo.lock
 .env.test
 .DS_Store
 system_message.txt
