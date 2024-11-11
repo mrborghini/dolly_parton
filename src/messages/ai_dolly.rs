@@ -412,7 +412,7 @@ impl AIDolly {
         let mut conversation = self.load_conversation();
 
         conversation.add_message(
-            format!("{}: {}", msg.author, msg.content.to_string()),
+            format!("{}: {}", msg.author, msg.content),
             "user".to_string(),
             self.max_stored_messages,
         );
@@ -500,7 +500,7 @@ impl AIDolly {
             let cleaned_responds = self.remove_special_chars(respond.clone());
 
             // Prevent it to respond to everything
-            if cleaned_responds == "" {
+            if cleaned_responds.is_empty() {
                 continue;
             }
 

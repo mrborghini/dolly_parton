@@ -62,7 +62,7 @@ impl EventHandler for Handler {
             let content = match command.data.name.as_str() {
                 "ping" => Some(commands::ping::run(&command.data.options())),
                 "rage" => Some(commands::rage::run(&command.data.options())),
-                "quote" => Some(commands::quote::run(&command.data.options()).await),
+                "quote" => Some(commands::quote::run(Logger::new("Quote"), &command.data.options()).await),
                 "clearconversation" => Some(commands::clear_converstation::run(
                     &command.data.options(),
                     self.message_handlers.last().unwrap().as_ref(),
