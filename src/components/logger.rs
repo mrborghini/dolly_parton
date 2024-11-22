@@ -11,6 +11,7 @@ use chrono::{Local, TimeZone, Utc};
 use super::types::{Colors, Log, LogType, Severity};
 
 /// The core struct for the logger.
+#[derive(Clone)]
 pub struct Logger {
     type_name: String,
 }

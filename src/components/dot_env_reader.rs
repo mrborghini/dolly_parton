@@ -60,6 +60,10 @@ impl DotEnvReader {
             }
 
             if let Some((key, value)) = self.parse_key_value(trimmed_line) {
+                if value.is_empty() {
+                    continue;
+                }
+
                 self.logger.debug(
                     format!("Parsed key-value pair: {}={}", key, value).as_str(),
                     func_name,

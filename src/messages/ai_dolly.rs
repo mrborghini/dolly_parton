@@ -12,6 +12,7 @@ use crate::components::types::Severity;
 use crate::components::Logger;
 
 use super::message_handler::MessageHandler;
+use super::{Cohere, LlmProvider, MessageRequest, Ollama, OpenAI};
 
 /// This type contains some settings for Ollama
 ///
@@ -20,17 +21,17 @@ use super::message_handler::MessageHandler;
 /// * `model` - The model that's gonna be used. Like `llama3.1`
 /// * `prompt` - The string that's being sent to the api
 /// * `system` - System message as a string
-#[derive(Debug, Serialize)]
-struct OllamaBody {
-    model: String,
-    messages: Vec<OllamaMessage>,
-    stream: bool,
+#[derive(Debug, Clone, Serialize)]
+pub struct LlmBody {
+    pub model: String,
+    pub messages: Vec<LlmMessage>,
+    pub stream: bool,
 }
 
 /// Ollama response as a string
-#[derive(Debug, Deserialize)]
-struct OllamaResponse {
-    message: OllamaMessage,
+#[derive(Debug, Clone, Deserialize)]
+pub struct LlmResponse {
+    pub message: LlmMessage,
 }
 
 /// Ollama message stored in the json file
@@ -40,9 +41,9 @@ struct OllamaResponse {
 /// * `content` - String of the message
 /// * `Role` - String of the user id or assistant
 #[derive(Debug, Deserialize, Serialize, Clone)]
-struct OllamaMessage {
-    content: String,
-    role: String,
+pub struct LlmMessage {
+    pub content: String,
+    pub role: String,
 }
 
 /// The whole conversation that gets stored
@@ -51,8 +52,8 @@ struct OllamaMessage {
 ///
 /// * `messages` - A vector of OllamaMessages
 #[derive(Debug, Deserialize, Serialize, Clone)]
-struct Conversation {
-    messages: Vec<OllamaMessage>,
+pub struct Conversation {
+    pub messages: Vec<LlmMessage>,
 }
 
 impl Conversation {
@@ -64,7 +65,7 @@ impl Conversation {
     /// * `role` - The string of the role. So either userid or assistant
     fn add_message(&mut self, message: String, role: String, max_messages: i32) {
         self.trim_messages(max_messages);
-        let ollama_message = OllamaMessage {
+        let ollama_message = LlmMessage {
             content: message,
             role,
         };
@@ -114,6 +115,11 @@ pub struct AIDolly {
     out_dir: String,
     conversation_file: String,
     max_stored_messages: i32,
+    openai_model: String,
+    openai_token: String,
+    cohere_token: String,
+    cohere_model: String,
+    priortize_ollama: bool,
 }
 
 impl AIDolly {
@@ -122,9 +128,7 @@ impl AIDolly {
         let function_name = "new";
 
         let out_dir = "out_data".to_string();
-
         let conversation_file = "conversation.json".to_string();
-
         let logger = Logger::new("AIdolly");
 
         // Ollama URL
@@ -164,6 +168,7 @@ impl AIDolly {
             default_model
         });
 
+        // Max stored messages
         let max_stored_messages: i32 = env::var("MAX_STORED_MESSAGES")
             .unwrap_or_else(|_| {
                 let default_amount = 6;
@@ -211,7 +216,6 @@ impl AIDolly {
             .to_lowercase();
 
         let mut responds_to_vec: Vec<String> = Vec::new();
-
         for respond in responds_to.split(",") {
             responds_to_vec.push(respond.to_lowercase().to_string());
         }
@@ -228,6 +232,25 @@ impl AIDolly {
             })
             .to_lowercase() == "true";
 
+        // OpenAI Token
+        let openai_token = env::var("OPENAI_TOKEN").unwrap_or_else(|_| "".to_string());
+
+        // OpenAI Model
+        let openai_model = env::var("OPENAI_MODEL").unwrap_or_else(|_| "gpt-4o".to_string());
+
+        // Cohere Token
+        let cohere_token = env::var("COHERE_TOKEN").unwrap_or_else(|_| "".to_string());
+
+        // Cohere Model
+        let cohere_model =
+            env::var("COHERE_MODEL").unwrap_or_else(|_| "command-r-plus-08-2024".to_string());
+
+        // Prioritize Ollama
+        let priortize_ollama = env::var("PRIORTIZE_OLLAMA")
+            .unwrap_or_else(|_| "true".to_string())
+            .to_lowercase()
+            == "true";
+
         Self {
             logger,
             ollama_base_url,
@@ -237,6 +260,11 @@ impl AIDolly {
             conversation_file,
             out_dir,
             max_stored_messages,
+            openai_token,
+            openai_model,
+            cohere_token,
+            cohere_model,
+            priortize_ollama,
         }
     }
 
@@ -353,13 +381,76 @@ impl AIDolly {
         }
     }
 
+    async fn get_llm_message_based_on_settings(&self, llm_body: LlmBody) -> LlmResponse {
+        let function_name = "get_llm_message_based_on_settings";
+
+        if self.priortize_ollama {
+            self.logger.info("Using Ollama to respond", function_name);
+            let ollama_response = Ollama::get_message(MessageRequest::WithUrl {
+                url: self.ollama_base_url.clone(),
+                llm_body: llm_body.clone(),
+            }, self.logger.clone())
+            .await;
+
+            // If Ollama response is empty and Cohere token is available, fall back to Cohere
+            if ollama_response.message.role.is_empty() && !self.cohere_token.is_empty() {
+                return self.get_cohere_response(llm_body).await;
+            }
+
+            // If Ollama response has a role and OpenAI token is available, fall back to OpenAI
+            if !ollama_response.message.role.is_empty() && !self.openai_token.is_empty() {
+                return self.get_openai_response(llm_body).await;
+            }
+
+            return ollama_response;
+        } else {
+            // Prioritize Cohere or OpenAI if available, otherwise fall back to Ollama
+            if !self.cohere_token.is_empty() {
+                return self.get_cohere_response(llm_body).await;
+            } else if !self.openai_token.is_empty() {
+                return self.get_openai_response(llm_body).await;
+            }
+
+            self.logger.info("Using Ollama to respond", function_name);
+            return Ollama::get_message(MessageRequest::WithUrl {
+                url: self.ollama_base_url.clone(),
+                llm_body: llm_body.clone(),
+            }, self.logger.clone())
+            .await;
+        }
+    }
+
+    // Helper function for Cohere
+    async fn get_cohere_response(&self, mut llm_body: LlmBody) -> LlmResponse {
+        let function_name = "get_cohere_response";
+        self.logger.info("Using Cohere to respond", function_name);
+        llm_body.model = self.cohere_model.clone();
+        Cohere::get_message(MessageRequest::WithToken {
+            llm_body,
+            token: self.cohere_token.clone(),
+        }, self.logger.clone())
+        .await
+    }
+
+    // Helper function for OpenAI
+    async fn get_openai_response(&self, mut llm_body: LlmBody) -> LlmResponse {
+        let function_name = "get_openai_response";
+        self.logger.info("Using OpenAI to respond", function_name);
+        llm_body.model = self.openai_model.clone();
+        OpenAI::get_message(MessageRequest::WithToken {
+            llm_body,
+            token: self.openai_token.clone(),
+        }, self.logger.clone())
+        .await
+    }
+
     /// This function will format the prompt like: `role: message`
-    fn format_into_prompt(&self, conversation: Conversation) -> Vec<OllamaMessage> {
+    fn format_into_prompt(&self, conversation: Conversation) -> Vec<LlmMessage> {
         let function_name = "format_into_prompt";
 
-        let mut messages: Vec<OllamaMessage> = Vec::new();
+        let mut messages: Vec<LlmMessage> = Vec::new();
 
-        let system_message = OllamaMessage {
+        let system_message = LlmMessage {
             role: "system".to_string(),
             content: self.read_system_message(),
         };
@@ -368,7 +459,10 @@ impl AIDolly {
 
         for message in conversation.messages {
             messages.push(message.clone());
-            self.logger.debug(format!("{}: {}", message.role, message.content).as_str(), function_name);
+            self.logger.debug(
+                format!("{}: {}", message.role, message.content).as_str(),
+                function_name,
+            );
         }
 
         messages
@@ -400,7 +494,7 @@ impl AIDolly {
     /// # Arguments
     ///
     /// * `msg` - The original Discord message
-    async fn get_ollama_message(&self, msg: &Message) -> String {
+    async fn get_llm_message(&self, msg: &Message) -> String {
         let function_name = "get_ollama_message";
 
         if self.ollama_base_url.is_empty() {
@@ -417,61 +511,25 @@ impl AIDolly {
             self.max_stored_messages,
         );
 
-        let request_url = format!("{}/api/chat", self.ollama_base_url.clone());
-
-        self.logger.debug(request_url.as_str(), function_name);
-
-        let prompt_data = OllamaBody {
+        let prompt_data = LlmBody {
             model: self.ollama_model.clone(),
             messages: self.format_into_prompt(conversation.clone()),
             stream: false,
         };
 
-        let request_body = serde_json::to_string(&prompt_data).unwrap();
+        let ollama_response = self.get_llm_message_based_on_settings(prompt_data).await;
 
-        let response = reqwest::Client::new()
-            .post(request_url)
-            .body(request_body)
-            .send()
-            .await;
+        conversation.add_message(
+            ollama_response.message.content.clone(),
+            ollama_response.message.role,
+            self.max_stored_messages,
+        );
+        self.save_conversation(conversation);
+        let response = self.crop_string(&ollama_response.message.content, 1950);
 
-        match response {
-            Ok(response) => {
-                let response_json = response.json::<OllamaResponse>().await;
-
-                match response_json {
-                    Ok(ollama_response) => {
-                        conversation.add_message(
-                            ollama_response.message.content.clone(),
-                            ollama_response.message.role,
-                            self.max_stored_messages,
-                        );
-                        self.save_conversation(conversation);
-                        let response = self.crop_string(&ollama_response.message.content, 1950);
-
-                        self.logger
-                            .debug(format!("Reponse: {}", response).as_str(), function_name);
-                        response
-                    }
-                    Err(why) => {
-                        self.logger.error(
-                            format!("Could not request Ollama response: {}", why).as_str(),
-                            function_name,
-                            Severity::High,
-                        );
-                        "Something went wrong 😭".to_string()
-                    }
-                }
-            }
-            Err(why) => {
-                self.logger.error(
-                    format!("Could not request Ollama response: {}", why).as_str(),
-                    function_name,
-                    Severity::High,
-                );
-                "Something went wrong 😭".to_string()
-            }
-        }
+        self.logger
+            .debug(format!("Reponse: {}", response).as_str(), function_name);
+        response
     }
 
     /// This function removes special chars
@@ -587,7 +645,7 @@ impl MessageHandler for AIDolly {
             self.logger.info("Using ollama to respond", function_name);
             match msg
                 .channel_id
-                .say(&ctx.http, self.get_ollama_message(msg).await)
+                .say(&ctx.http, self.get_llm_message(msg).await)
                 .await
             {
                 Ok(_) => return true,
