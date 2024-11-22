@@ -14,6 +14,11 @@ services:
       - MAX_STORED_MESSAGES=${MAX_STORED_MESSAGES}
       - LOGGER_DEBUG=${LOGGER_DEBUG}
       - WRITE_LOGS=${WRITE_LOGS}
+      - OPENAI_TOKEN=${OPENAI_TOKEN}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+      - COHERE_TOKEN=${COHERE_TOKEN}
+      - COHERE_MODEL=${COHERE_MODEL}
+      - PRIORTIZE_OLLAMA=${PRIORTIZE_OLLAMA}
     volumes:
       - data:/out_data
 volumes:

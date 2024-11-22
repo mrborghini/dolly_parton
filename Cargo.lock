@@ -339,7 +339,7 @@ dependencies = [
 
 [[package]]
 name = "dolly_parton"
-version = "13.9.0"
+version = "14.0.0"
 dependencies = [
  "chrono",
  "reqwest",
