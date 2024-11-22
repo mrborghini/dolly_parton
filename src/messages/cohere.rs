@@ -59,7 +59,7 @@ impl LlmProvider for Cohere {
                             Ok(cohere_response) => {
                                 let content = cohere_response.message.content;
 
-                                if content.len() == 0 {
+                                if content.is_empty() {
                                     logger.error(
                                         "Could not get content",
                                         function_name,

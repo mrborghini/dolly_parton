@@ -45,13 +45,13 @@ impl LlmProvider for OpenAI {
 
                         match openai_response {
                             Ok(response) => {
-                                if response.choices.len() == 0 {
+                                if response.choices.is_empty() {
                                     panic!();
                                 }
 
-                                let choice = response.choices[0].clone();
+                                
 
-                                choice
+                                response.choices[0].clone()
                             }
                             Err(why) => {
                                 logger.error(

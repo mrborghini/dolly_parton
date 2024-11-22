@@ -402,7 +402,7 @@ impl AIDolly {
                 return self.get_openai_response(llm_body).await;
             }
 
-            return ollama_response;
+            ollama_response
         } else {
             // Prioritize Cohere or OpenAI if available, otherwise fall back to Ollama
             if !self.cohere_token.is_empty() {
@@ -412,11 +412,11 @@ impl AIDolly {
             }
 
             self.logger.info("Using Ollama to respond", function_name);
-            return Ollama::get_message(MessageRequest::WithUrl {
+            Ollama::get_message(MessageRequest::WithUrl {
                 url: self.ollama_base_url.clone(),
                 llm_body: llm_body.clone(),
             }, self.logger.clone())
-            .await;
+            .await
         }
     }
 
