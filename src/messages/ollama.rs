@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use serenity::async_trait;
 
 use crate::components::{types::Severity, Logger};
@@ -13,10 +15,28 @@ impl LlmProvider for Ollama {
 
         match request {
             MessageRequest::WithUrl { llm_body, url } => {
+                // Check if ollama is online by using the / path
+                let ping_url = format!("{}/", url.clone());
+                let ping_response = reqwest::Client::new()
+                    .get(ping_url)
+                    .timeout(Duration::from_millis(500))
+                    .send()
+                    .await;
+
+                match ping_response {
+                    Ok(_) => {}
+                    Err(_) => {
+                        return LlmResponse {
+                            message: LlmMessage {
+                                content: String::new(),
+                                role: String::new(),
+                            },
+                        }
+                    }
+                }
+
                 let request_url = format!("{}/api/chat", url);
-
                 let request_body = serde_json::to_string(&llm_body).unwrap();
-
                 let response = reqwest::Client::new()
                     .post(request_url)
                     .body(request_body)
