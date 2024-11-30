@@ -17,12 +17,11 @@ impl LlmProvider for Ollama {
             MessageRequest::WithUrl { llm_body, url } => {
                 // Check if ollama is online by using the / path
                 let ping_url = format!("{}/", url.clone());
-                let ping_response = reqwest::Client::new()
-                    .get(ping_url)
-                    .timeout(Duration::from_millis(500))
-                    .send()
-                    .await;
-
+                let ping_client = reqwest::Client::builder()
+                    .timeout(Duration::from_millis(500)) // Applies to the entire request
+                    .build()
+                    .unwrap();
+                let ping_response = ping_client.get(ping_url).send().await;
                 match ping_response {
                     Ok(_) => {}
                     Err(_) => {
