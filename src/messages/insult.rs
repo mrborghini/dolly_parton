@@ -1,5 +1,5 @@
 use serenity::async_trait;
-use serenity::gateway::client::Context;
+use serenity::client::Context;
 use serenity::model::channel::Message;
 
 use crate::components::types::Severity;

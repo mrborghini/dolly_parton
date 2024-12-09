@@ -44,6 +44,6 @@ pub async fn run<'a>(logger: Logger, _options: &[ResolvedOption<'a>]) -> String 
     }
 }
 
-pub fn register() -> CreateCommand<'static> {
+pub fn register() -> CreateCommand {
     CreateCommand::new("quote").description("Generates random quote")
 }

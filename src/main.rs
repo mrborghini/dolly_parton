@@ -28,11 +28,6 @@ struct Handler {
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         let function_name = "message";
-        // Prevent responding to other bots
-        if !ctx.cache.current_user().bot() {
-            return;
-        }
-
         // Prevent the bot responding to it self
         if ctx.cache.current_user().id == msg.author.id {
             return;
@@ -128,12 +123,12 @@ impl EventHandler for Handler {
             let commands = guild_id
                 .set_commands(
                     &ctx.http,
-                    &[
+                    (&[
                         ping::register(),
                         rage::register(),
                         quote::register(),
                         clear_converstation::register(),
-                    ],
+                    ]).to_vec(),
                 )
                 .await;
 

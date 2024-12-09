@@ -13,6 +13,6 @@ pub fn run(
     "Could not clear conversation".to_string()
 }
 
-pub fn register() -> CreateCommand<'static> {
+pub fn register() -> CreateCommand {
     CreateCommand::new("clearconversation").description("Clears AI conversation")
 }
