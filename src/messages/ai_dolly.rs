@@ -476,7 +476,7 @@ impl AIDolly {
     /// * `limit` - The max length that the message will crop to
     fn crop_string(&self, input_string: &str, limit: usize) -> String {
         // Use char_indices to ensure we don't split a multi-byte character
-        let mut end_index = input_string.len();
+        let mut end_index = input_string.chars().count();
 
         for (i, _) in input_string.char_indices() {
             if i > limit {
