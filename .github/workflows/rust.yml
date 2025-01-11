@@ -5,10 +5,11 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-  workflow_dispatch: # Allows manual triggering of the workflow
+  workflow_dispatch:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  EXECUTABLE_NAME: "dolly_parton"
 
 jobs:
   extract-version:
@@ -25,7 +26,7 @@ jobs:
         version=$(grep '^version =' Cargo.toml | sed 's/version = \"//;s/\"//')
         echo "version=$version" >> $GITHUB_OUTPUT
 
-  build:
+  build-linux:
     needs: extract-version
     runs-on: ubuntu-latest
     env:
@@ -37,14 +38,8 @@ jobs:
     - name: Install Rust
       run: rustup update stable
 
-    - name: Print environment
-      run: env # Debug: Print environment variables
-
     - name: Build
       run: cargo build --release --verbose
-
-    - name: List build directory
-      run: ls -la target/release # Debug: List the contents of the release directory to verify the build
 
     - name: Run tests
       run: cargo test --verbose
@@ -52,10 +47,7 @@ jobs:
     - name: Create release artifact
       run: |
         mkdir -p artifacts
-        cp target/release/dolly_parton artifacts/dolly_parton-x86_64-Linux
-
-    - name: Verify artifact creation
-      run: ls -la artifacts # Debug: Verify that the artifact was copied correctly
+        cp target/release/${{ env.EXECUTABLE_NAME }} artifacts/${{ env.EXECUTABLE_NAME }}-x86_64-Linux
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -63,7 +55,7 @@ jobs:
         name: release-binary
         path: artifacts/
 
-  windows-build:
+  build-windows:
     needs: extract-version
     runs-on: windows-latest
     env:
@@ -75,14 +67,8 @@ jobs:
     - name: Install Rust
       run: rustup update stable
 
-    - name: Print environment
-      run: env # Debug: Print environment variables
-
     - name: Build
       run: cargo build --release --verbose
-
-    - name: List build directory
-      run: dir target\release # Debug: List the contents of the release directory to verify the build (Windows)
 
     - name: Run tests
       run: cargo test --verbose
@@ -90,10 +76,7 @@ jobs:
     - name: Create release artifact
       run: |
         mkdir artifacts
-        copy target\release\dolly_parton.exe artifacts\dolly_parton-x86_64-Windows.exe
-
-    - name: Verify artifact creation
-      run: dir artifacts # Debug: Verify that the artifact was copied correctly (Windows)
+        copy target\release\${{ env.EXECUTABLE_NAME }}.exe artifacts\${{ env.EXECUTABLE_NAME }}-x86_64-Windows.exe
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -102,7 +85,7 @@ jobs:
         path: artifacts/
 
   release:
-    needs: [build, windows-build, extract-version]
+    needs: [build-linux, build-windows, extract-version]
     runs-on: ubuntu-latest
     env:
       CARGO_VERSION: ${{ needs.extract-version.outputs.version }}
@@ -122,21 +105,16 @@ jobs:
         name: release-binary-windows
         path: ./release-binary-windows
 
-    - name: List downloaded artifacts
-      run: |
-        ls -la ./release-binary-linux
-        ls -la ./release-binary-windows
-
     - name: Install GitHub CLI
       run: sudo apt-get install -y gh
 
     - name: Delete existing release assets (if any)
       run: |
-        gh release delete-asset v${{ env.CARGO_VERSION }} dolly_parton-x86_64-Linux || true
-        gh release delete-asset v${{ env.CARGO_VERSION }} dolly_parton-x86_64-Windows.exe || true
+        gh release delete-asset v${{ env.CARGO_VERSION }} ${{ env.EXECUTABLE_NAME }}-x86_64-Linux || true
+        gh release delete-asset v${{ env.CARGO_VERSION }} ${{ env.EXECUTABLE_NAME }}-x86_64-Windows.exe || true
 
     - name: Create GitHub Release
       run: |
-        gh release create v${{ env.CARGO_VERSION }} ./release-binary-linux/dolly_parton-x86_64-Linux ./release-binary-windows/dolly_parton-x86_64-Windows.exe \
+        gh release create v${{ env.CARGO_VERSION }} ./release-binary-linux/${{ env.EXECUTABLE_NAME }}-x86_64-Linux ./release-binary-windows/${{ env.EXECUTABLE_NAME }}-x86_64-Windows.exe \
           --title "Release ${{ env.CARGO_VERSION }}" \
           --notes "Automated release"
