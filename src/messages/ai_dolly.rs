@@ -386,10 +386,13 @@ impl AIDolly {
 
         if self.priortize_ollama {
             self.logger.info("Using Ollama to respond", function_name);
-            let ollama_response = Ollama::get_message(MessageRequest::WithUrl {
-                url: self.ollama_base_url.clone(),
-                llm_body: llm_body.clone(),
-            }, self.logger.clone())
+            let ollama_response = Ollama::get_message(
+                MessageRequest::WithUrl {
+                    url: self.ollama_base_url.clone(),
+                    llm_body: llm_body.clone(),
+                },
+                self.logger.clone(),
+            )
             .await;
 
             // If Ollama response is empty and Cohere token is available, fall back to Cohere
@@ -412,10 +415,13 @@ impl AIDolly {
             }
 
             self.logger.info("Using Ollama to respond", function_name);
-            Ollama::get_message(MessageRequest::WithUrl {
-                url: self.ollama_base_url.clone(),
-                llm_body: llm_body.clone(),
-            }, self.logger.clone())
+            Ollama::get_message(
+                MessageRequest::WithUrl {
+                    url: self.ollama_base_url.clone(),
+                    llm_body: llm_body.clone(),
+                },
+                self.logger.clone(),
+            )
             .await
         }
     }
@@ -425,10 +431,13 @@ impl AIDolly {
         let function_name = "get_cohere_response";
         self.logger.info("Using Cohere to respond", function_name);
         llm_body.model = self.cohere_model.clone();
-        Cohere::get_message(MessageRequest::WithToken {
-            llm_body,
-            token: self.cohere_token.clone(),
-        }, self.logger.clone())
+        Cohere::get_message(
+            MessageRequest::WithToken {
+                llm_body,
+                token: self.cohere_token.clone(),
+            },
+            self.logger.clone(),
+        )
         .await
     }
 
@@ -437,10 +446,13 @@ impl AIDolly {
         let function_name = "get_openai_response";
         self.logger.info("Using OpenAI to respond", function_name);
         llm_body.model = self.openai_model.clone();
-        OpenAI::get_message(MessageRequest::WithToken {
-            llm_body,
-            token: self.openai_token.clone(),
-        }, self.logger.clone())
+        OpenAI::get_message(
+            MessageRequest::WithToken {
+                llm_body,
+                token: self.openai_token.clone(),
+            },
+            self.logger.clone(),
+        )
         .await
     }
 
@@ -475,18 +487,20 @@ impl AIDolly {
     /// * `input_string` - The string of the message to be cropped
     /// * `limit` - The max length that the message will crop to
     fn crop_string(&self, input_string: &str, limit: usize) -> String {
-        // Use char_indices to ensure we don't split a multi-byte character
-        let mut end_index = input_string.chars().count();
+        let mut char_count = 0;
 
         for (i, _) in input_string.char_indices() {
-            if i > limit {
-                end_index = i;
-                break;
+            // Increment character count
+            char_count += 1;
+
+            // Stop when we reach the limit
+            if char_count > limit {
+                return input_string[..i].to_string();
             }
         }
 
-        // Return the safely cropped string
-        input_string[..end_index].to_string()
+        // If the string is shorter than the limit, return it as is
+        input_string.to_string()
     }
 
     /// This function will get a message from the ollama api
