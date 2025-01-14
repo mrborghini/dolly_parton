@@ -1,10 +1,24 @@
-use std::time::Duration;
+use std::{env, time::Duration};
 
+use serde::Serialize;
 use serenity::async_trait;
 
 use crate::components::{types::Severity, Logger};
 
 use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
+
+#[derive(Serialize)]
+struct OllamaBody {
+    model: String,
+    messages: Vec<LlmMessage>,
+    stream: bool,
+    options: OllamaOptions,
+}
+
+#[derive(Serialize)]
+struct OllamaOptions {
+    num_ctx: i32,
+}
 
 pub struct Ollama;
 
@@ -34,8 +48,19 @@ impl LlmProvider for Ollama {
                     }
                 }
 
+                let num_ctx: i32 = env::var("NUM_CTX").unwrap().parse().unwrap_or(2048);
+
+                logger.debug(format!("Using {} context window", num_ctx).as_str(), function_name);
+
+                let ollama_body = OllamaBody {
+                    model: llm_body.model,
+                    messages: llm_body.messages,
+                    stream: false,
+                    options: OllamaOptions { num_ctx },
+                };
+
                 let request_url = format!("{}/api/chat", url);
-                let request_body = serde_json::to_string(&llm_body).unwrap();
+                let request_body = serde_json::to_string(&ollama_body).unwrap();
                 let response = reqwest::Client::new()
                     .post(request_url)
                     .body(request_body)

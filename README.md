@@ -42,15 +42,32 @@ docker compose up
 This is a basic config
 
 ```dosini
-DISCORD_TOKEN=yourtoken
-GUILD_ID=84343943
-OLLAMA_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.2
-RESPOND_TO_ALL_MESSAGES=false
-RESPONDS_TO=dolly,=gm,goodmorning
-MAX_STORED_MESSAGES=6
-LOGGER_DEBUG=false
-WRITE_LOGS=false
+DISCORD_TOKEN=yourtoken             # Token for your Discord bot
+GUILD_ID=84343943                   # ID of your Discord server
+
+# AI providers
+OPENAI_TOKEN=                       # Optional leave empty like this to not use this feature.
+OPENAI_MODEL=gpt-4o                 # Change the model is you set the openai token (optional)
+
+COHERE_TOKEN=                       # Optional leave empty like this to not use this feature.
+COHERE_MODEL=command-r-plus-08-2024 # Change the model is you set the cohere token (optional)
+
+# Ollama Server Configuration
+OLLAMA_URL=http://localhost:11434   # URL of the Ollama server
+OLLAMA_MODEL=llama3.2               # Model to use on the Ollama server
+PRIORTIZE_OLLAMA=true               # If you want to use Ollama as a base, but if it's not available it will use the others if you set the one of the tokens
+NUM_CTX=2048                        # If you want ollama to remember more stuff you can change this to a higher value
+
+# Bot Response Behavior
+RESPOND_TO_ALL_MESSAGES=false       # Whether the bot should respond to all messages (true/false)
+RESPONDS_TO=dolly,=gm,goodmorning   # Comma-separated triggers (prefix with = for exact match)
+
+# Message Handling
+MAX_STORED_MESSAGES=6               # Max stored messages (0 = no limit)
+
+# Logging Configuration
+LOGGER_DEBUG=false                  # Enable detailed logs if WRITE_LOGS is true
+WRITE_LOGS=false                    # Enable writing logs to 'out_data'
 ```
 
 - `DISCORD_TOKEN` is the token for your bot
@@ -66,6 +83,7 @@ WRITE_LOGS=false
 - `OLLAMA_URL` is the url of the Ollama server
 - `OLLAMA_MODEL` is the model for the Ollama server
 - `OLLAMA_MODEL` is the model for the Ollama server
+- `NUM_CTX` is the amount of tokens a message array can have.
 - `PRIORTIZE_OLLAMA` It will use Ollama over other providers if set to true.
 - `RESPOND_TO_ALL_MESSAGES` whether the bot should respond to all messages it
   receives with Ollama
