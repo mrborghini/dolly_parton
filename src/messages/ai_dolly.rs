@@ -1,4 +1,4 @@
-use std::fs::{read_to_string, OpenOptions};
+use std::fs::{OpenOptions, read_to_string};
 use std::io::Write;
 use std::path::Path;
 use std::{env, fs};
@@ -8,8 +8,8 @@ use serenity::async_trait;
 use serenity::client::Context;
 use serenity::model::channel::Message;
 
-use crate::components::types::Severity;
 use crate::components::Logger;
+use crate::components::types::Severity;
 
 use super::message_handler::MessageHandler;
 use super::{Cohere, LlmProvider, MessageRequest, Ollama, OpenAI};

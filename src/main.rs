@@ -2,7 +2,7 @@
 mod commands;
 mod components;
 mod messages;
-use commands::{clear_converstation, ping, quote, rage};
+use commands::{clear_converstation, ping, quote, rage, version};
 use components::types::Severity;
 use components::{DotEnvReader, Logger};
 use messages::{AIDolly, Insult, MessageHandler, Ping};
@@ -57,11 +57,14 @@ impl EventHandler for Handler {
             let content = match command.data.name.as_str() {
                 "ping" => Some(commands::ping::run(&command.data.options())),
                 "rage" => Some(commands::rage::run(&command.data.options())),
-                "quote" => Some(commands::quote::run(Logger::new("Quote"), &command.data.options()).await),
+                "quote" => {
+                    Some(commands::quote::run(Logger::new("Quote"), &command.data.options()).await)
+                }
                 "clearconversation" => Some(commands::clear_converstation::run(
                     &command.data.options(),
                     self.message_handlers.last().unwrap().as_ref(),
                 )),
+                "version" => Some(commands::version::run(&command.data.options())),
                 _ => {
                     self.logger.warning(
                         format!("Invalid command: {}", command.data.name.as_str()).as_str(),
@@ -127,8 +130,10 @@ impl EventHandler for Handler {
                         ping::register(),
                         rage::register(),
                         quote::register(),
+                        version::register(),
                         clear_converstation::register(),
-                    ].to_vec(),
+                    ]
+                    .to_vec(),
                 )
                 .await;
 
@@ -143,6 +148,7 @@ impl EventHandler for Handler {
             Command::create_global_command(&ctx.http, ping::register()).await,
             Command::create_global_command(&ctx.http, rage::register()).await,
             Command::create_global_command(&ctx.http, quote::register()).await,
+            Command::create_global_command(&ctx.http, version::register()).await,
             Command::create_global_command(&ctx.http, clear_converstation::register()).await,
         ];
 

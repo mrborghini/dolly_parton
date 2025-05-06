@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serenity::async_trait;
 
-use crate::components::{types::Severity, Logger};
+use crate::components::{Logger, types::Severity};
 
 use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
 
@@ -48,8 +48,6 @@ impl LlmProvider for OpenAI {
                                 if response.choices.is_empty() {
                                     panic!();
                                 }
-
-                                
 
                                 response.choices[0].clone()
                             }

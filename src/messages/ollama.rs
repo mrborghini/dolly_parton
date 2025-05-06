@@ -3,7 +3,7 @@ use std::{env, time::Duration};
 use serde::Serialize;
 use serenity::async_trait;
 
-use crate::components::{types::Severity, Logger};
+use crate::components::{Logger, types::Severity};
 
 use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
 
@@ -44,13 +44,16 @@ impl LlmProvider for Ollama {
                                 content: String::new(),
                                 role: String::new(),
                             },
-                        }
+                        };
                     }
                 }
 
                 let num_ctx: i32 = env::var("NUM_CTX").unwrap().parse().unwrap_or(2048);
 
-                logger.debug(format!("Using {} context window", num_ctx).as_str(), function_name);
+                logger.debug(
+                    format!("Using {} context window", num_ctx).as_str(),
+                    function_name,
+                );
 
                 let ollama_body = OllamaBody {
                     model: llm_body.model,

@@ -2,8 +2,8 @@ use serenity::async_trait;
 use serenity::client::Context;
 use serenity::model::channel::Message;
 
-use crate::components::types::Severity;
 use crate::components::Logger;
+use crate::components::types::Severity;
 
 use super::message_handler::MessageHandler;
 

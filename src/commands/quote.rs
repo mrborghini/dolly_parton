@@ -3,8 +3,8 @@ use serde::Deserialize;
 use serenity::builder::CreateCommand;
 use serenity::model::application::ResolvedOption;
 
-use crate::components::types::Severity;
 use crate::components::Logger;
+use crate::components::types::Severity;
 
 #[derive(Debug, Deserialize)]
 struct ReceivedQuote {
@@ -14,7 +14,7 @@ struct ReceivedQuote {
 
 async fn get_quote() -> Result<String, reqwest::Error> {
     let client = Client::builder()
-        .danger_accept_invalid_certs(true)  // This disables SSL certificate verification, because it seems to be having issues often
+        .danger_accept_invalid_certs(true) // This disables SSL certificate verification, because it seems to be having issues often
         .build()?;
 
     let resp: ReceivedQuote = client
@@ -28,7 +28,7 @@ async fn get_quote() -> Result<String, reqwest::Error> {
     Ok(quote)
 }
 
-pub async fn run<'a>(logger: Logger, _options: &[ResolvedOption<'a>]) -> String {
+pub async fn run(logger: Logger, _options: &[ResolvedOption<'_>]) -> String {
     let function_name = "run";
 
     match get_quote().await {

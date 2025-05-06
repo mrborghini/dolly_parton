@@ -97,7 +97,9 @@ impl DotEnvReader {
                     format!("Setting environment variable: {}={}", key, value).as_str(),
                     func_name,
                 );
-                env::set_var(&key, &value);
+                unsafe {
+                    env::set_var(&key, &value);
+                }
             }
         }
     }

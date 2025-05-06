@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serenity::async_trait;
 
-use crate::components::{types::Severity, Logger};
+use crate::components::{Logger, types::Severity};
 
 use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
 
@@ -27,7 +27,7 @@ struct CohereText {
 impl LlmProvider for Cohere {
     async fn get_message(request: MessageRequest, logger: Logger) -> LlmResponse {
         let function_name = "get_message";
-        
+
         match request {
             MessageRequest::WithUrl {
                 llm_body: _,
