@@ -259,7 +259,4 @@ jobs:
           ${{ env.ARTIFACTS_DIR }}${{ env.LINUX_AARCH64_PATH }} \
           ${{ env.ARTIFACTS_DIR }}${{ env.WINDOWS_AMD64_PATH }} \
           ${{ env.ARTIFACTS_DIR }}${{ env.WINDOWS_AARCH64_PATH }} \
-          --title "Release $EXTRACTED_VERSION" \
-
-        Changes included in this release:
-        $RELEASE_NOTES"
+          --title "Release $EXTRACTED_VERSION"
