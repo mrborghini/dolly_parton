@@ -253,14 +253,13 @@ jobs:
         # Alternative: Fetch merged PRs if using GitHub CLI
         RELEASE_NOTES=$(gh api repos/:owner/:repo/pulls --jq '.[] | select(.merged_at != null) | "- #\(.number) \(.title) (@\(.user.login))"')
 
-        gh release create $EXTRACTED_VERSION \
+        gh release create $EXTRACTED_VERSION --generate-notes \
           ${{ env.ARTIFACTS_DIR }}${{ env.LINUX_AMD64_PATH }} \
           ${{ env.ARTIFACTS_DIR }}${{ env.LINUX_AMD64_MUSL_PATH }} \
           ${{ env.ARTIFACTS_DIR }}${{ env.LINUX_AARCH64_PATH }} \
           ${{ env.ARTIFACTS_DIR }}${{ env.WINDOWS_AMD64_PATH }} \
           ${{ env.ARTIFACTS_DIR }}${{ env.WINDOWS_AARCH64_PATH }} \
           --title "Release $EXTRACTED_VERSION" \
-          --notes "Automated release of version $EXTRACTED_VERSION.
 
         Changes included in this release:
         $RELEASE_NOTES"
