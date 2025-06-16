@@ -19,6 +19,8 @@ use std::env;
 use tokio::select;
 use tokio::signal;
 
+use crate::commands::{change_system_prompt, system_prompt};
+
 struct Handler {
     logger: Logger,
     message_handlers: Vec<Box<dyn MessageHandler + Send + Sync>>,
@@ -65,6 +67,8 @@ impl EventHandler for Handler {
                     self.message_handlers.last().unwrap().as_ref(),
                 )),
                 "version" => Some(commands::version::run(&command.data.options())),
+                "system_prompt" => Some(commands::system_prompt::run(&command.data.options())),
+                "change_system_prompt" => Some(commands::change_system_prompt::run(&command.data.options())),
                 _ => {
                     self.logger.warning(
                         format!("Invalid command: {}", command.data.name.as_str()).as_str(),
@@ -132,6 +136,8 @@ impl EventHandler for Handler {
                         quote::register(),
                         version::register(),
                         clear_converstation::register(),
+                        system_prompt::register(),
+                        change_system_prompt::register(),
                     ]
                     .to_vec(),
                 )
@@ -149,6 +155,8 @@ impl EventHandler for Handler {
             Command::create_global_command(&ctx.http, rage::register()).await,
             Command::create_global_command(&ctx.http, quote::register()).await,
             Command::create_global_command(&ctx.http, version::register()).await,
+            Command::create_global_command(&ctx.http, system_prompt::register()).await,
+            Command::create_global_command(&ctx.http, change_system_prompt::register()).await,
             Command::create_global_command(&ctx.http, clear_converstation::register()).await,
         ];
 
