@@ -6,8 +6,6 @@ use serenity::model::application::ResolvedOption;
 struct CroppedString {
     pub content: String,
     pub cut_amount: usize,
-    pub new_length: usize,
-    pub old_length: usize,
 }
 
 fn crop_string(input_string: &str, limit: usize) -> CroppedString {
@@ -23,8 +21,6 @@ fn crop_string(input_string: &str, limit: usize) -> CroppedString {
             return CroppedString {
                 content: cut_string.clone(),
                 cut_amount: input_string.chars().count() - cut_string.chars().count(),
-                new_length: cut_string.chars().count(),
-                old_length: input_string.chars().count(),
             };
         }
     }
@@ -33,18 +29,16 @@ fn crop_string(input_string: &str, limit: usize) -> CroppedString {
     CroppedString {
         content: input_string.to_string(),
         cut_amount: 0,
-        new_length: input_string.chars().count(),
-        old_length: input_string.chars().count(),
     }
 }
 
 pub fn run(_options: &[ResolvedOption]) -> String {
     let mut system_message = read_to_string("system_message.txt").unwrap_or("".to_string());
 
-    if system_message != "" {
+    if !system_message.is_empty() {
         let cut_system_message = crop_string(&system_message, 1500);
         
-        return format!("{} and **{} more chars**", cut_system_message.content, cut_system_message.cut_amount);
+        return format!("{} **and {} more chars**", cut_system_message.content, cut_system_message.cut_amount);
     }
     
     system_message = read_to_string("system_message_example.txt").unwrap();
