@@ -33,12 +33,8 @@ pub fn run(options: &[ResolvedOption]) -> String {
     let result = write_system_prompt(prompt);
 
     match result {
-        Ok(()) => {
-            "Successfully changed prompt".to_string()
-        }
-        Err(_) => {
-            "Failed to edit the system prompt".to_string()
-        }
+        Ok(()) => "Successfully changed prompt".to_string(),
+        Err(_) => "Failed to edit the system prompt".to_string(),
     }
 }
 

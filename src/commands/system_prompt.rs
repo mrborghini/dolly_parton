@@ -37,10 +37,13 @@ pub fn run(_options: &[ResolvedOption]) -> String {
 
     if !system_message.is_empty() {
         let cut_system_message = crop_string(&system_message, 1500);
-        
-        return format!("{} **and {} more chars**", cut_system_message.content, cut_system_message.cut_amount);
+
+        return format!(
+            "{} **and {} more chars**",
+            cut_system_message.content, cut_system_message.cut_amount
+        );
     }
-    
+
     system_message = read_to_string("system_message_example.txt").unwrap();
     system_message
 }

@@ -68,7 +68,9 @@ impl EventHandler for Handler {
                 )),
                 "version" => Some(commands::version::run(&command.data.options())),
                 "system_prompt" => Some(commands::system_prompt::run(&command.data.options())),
-                "change_system_prompt" => Some(commands::change_system_prompt::run(&command.data.options())),
+                "change_system_prompt" => {
+                    Some(commands::change_system_prompt::run(&command.data.options()))
+                }
                 _ => {
                     self.logger.warning(
                         format!("Invalid command: {}", command.data.name.as_str()).as_str(),

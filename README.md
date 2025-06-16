@@ -42,8 +42,10 @@ docker compose up
 This is a basic config
 
 ```dosini
+# Discord Bot Configuration
 DISCORD_TOKEN=yourtoken             # Token for your Discord bot
 GUILD_ID=84343943                   # ID of your Discord server
+ALLOW_CHANGING_SYSTEM_PROMPT=false  # This allows a user to change the system prompt inside of system_message.txt
 
 # AI providers
 OPENAI_TOKEN=                       # Optional leave empty like this to not use this feature.
@@ -72,6 +74,7 @@ WRITE_LOGS=false                    # Enable writing logs to 'out_data'
 
 - `DISCORD_TOKEN` is the token for your bot
 - `GUILD_ID` is the id of your discord server
+- `ALLOW_CHANGING_SYSTEM_PROMPT` If set to `true` the `/change_system_prompt` command will work.
 - `OPENAI_TOKEN` is the optional token if you want to use OpenAI instead of
   Ollama
 - `OPENAI_MODEL` is the optional model if you want to use OpenAI instead of
