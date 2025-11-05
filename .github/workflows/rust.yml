@@ -37,10 +37,10 @@ jobs:
       run: rustup update stable
 
     - name: Run tests
-      run: cargo test --release --verbose
+      run: cargo test --release
 
     - name: Run build
-      run: cargo build --release --verbose
+      run: cargo build --release
 
     - name: Create release artifact
       run: |
@@ -76,7 +76,7 @@ jobs:
       run: cargo add openssl -F vendored
 
     - name: Run build
-      run: cargo build --release --target ${{ env.TARGET_COMPILER }} --verbose
+      run: cargo build --release --target ${{ env.TARGET_COMPILER }}
     
     - name: Create release artifact
       run: |
@@ -111,7 +111,7 @@ jobs:
       run: cargo add openssl -F vendored
 
     - name: Run build
-      run: cargo build --release --target ${{ env.TARGET_COMPILER }} --verbose
+      run: cargo build --release --target ${{ env.TARGET_COMPILER }}
     
     - name: Create release artifact
       run: |
@@ -136,10 +136,10 @@ jobs:
       run: rustup update stable
 
     - name: Run tests
-      run: cargo test --release --verbose
+      run: cargo test --release
 
     - name: Run build
-      run: cargo build --release --verbose
+      run: cargo build --release
     
     - name: Create release artifact
       run: |
@@ -168,7 +168,7 @@ jobs:
       run: rustup target add ${{ env.TARGET_COMPILER }}
 
     - name: Run build
-      run: cargo build --release --target ${{ env.TARGET_COMPILER }} --verbose
+      run: cargo build --release --target ${{ env.TARGET_COMPILER }}
     
     - name: Create release artifact
       run: |
