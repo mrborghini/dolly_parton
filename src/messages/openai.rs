@@ -1,9 +1,7 @@
+use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
+use rust_logger::{Logger, Severity};
 use serde::Deserialize;
 use serenity::async_trait;
-
-use crate::components::{Logger, types::Severity};
-
-use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
 
 #[derive(Debug, Clone, Deserialize)]
 struct OpenAIResponse {
@@ -15,7 +13,6 @@ pub struct OpenAI;
 #[async_trait]
 impl LlmProvider for OpenAI {
     async fn get_message(request: MessageRequest, logger: Logger) -> LlmResponse {
-        let function_name = "get_message";
         match request {
             MessageRequest::WithUrl {
                 llm_body: _,
@@ -54,7 +51,6 @@ impl LlmProvider for OpenAI {
                             Err(why) => {
                                 logger.error(
                                     format!("Could not get OpenAi message: {}", why).as_str(),
-                                    function_name,
                                     Severity::High,
                                 );
                                 LlmResponse {

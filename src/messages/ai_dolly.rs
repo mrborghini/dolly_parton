@@ -1,18 +1,14 @@
-use std::fs::{OpenOptions, read_to_string};
-use std::io::Write;
-use std::path::Path;
-use std::{env, fs};
-
+use super::message_handler::MessageHandler;
+use super::{Cohere, LlmProvider, MessageRequest, Ollama, OpenAI};
+use rust_logger::{Logger, Severity};
 use serde::{Deserialize, Serialize};
 use serenity::async_trait;
 use serenity::client::Context;
 use serenity::model::channel::Message;
-
-use crate::components::Logger;
-use crate::components::types::Severity;
-
-use super::message_handler::MessageHandler;
-use super::{Cohere, LlmProvider, MessageRequest, Ollama, OpenAI};
+use std::fs::{OpenOptions, read_to_string};
+use std::io::Write;
+use std::path::Path;
+use std::{env, fs};
 
 /// This type contains some settings for Ollama
 ///
@@ -125,8 +121,6 @@ pub struct AIDolly {
 impl AIDolly {
     /// Constructor
     pub fn new() -> Self {
-        let function_name = "new";
-
         let out_dir = "out_data".to_string();
         let conversation_file = "conversation.json".to_string();
         let logger = Logger::new("AIdolly");
@@ -135,7 +129,6 @@ impl AIDolly {
         let ollama_base_url = env::var("OLLAMA_URL").unwrap_or_else(|_| {
             logger.error(
                 "OLLAMA_URL has not been set in the environment",
-                function_name,
                 Severity::High,
             );
             "".to_string()
@@ -147,7 +140,6 @@ impl AIDolly {
         } else {
             logger.error(
                 "OLLAMA_URL does not contain 'http' or 'https' scheme",
-                function_name,
                 Severity::High,
             );
             "".to_string()
@@ -162,7 +154,6 @@ impl AIDolly {
                     default_model
                 )
                 .as_str(),
-                function_name,
                 Severity::Medium,
             );
             default_model
@@ -178,7 +169,6 @@ impl AIDolly {
                         default_amount
                     )
                     .as_str(),
-                    function_name,
                     Severity::Medium,
                 );
                 default_amount.to_string() // Convert to String for parse.
@@ -192,7 +182,6 @@ impl AIDolly {
                         fallback_amount
                     )
                     .as_str(),
-                    function_name,
                     Severity::Medium,
                 );
                 fallback_amount
@@ -208,7 +197,6 @@ impl AIDolly {
                         default_responds_to
                     )
                     .as_str(),
-                    function_name,
                     Severity::Low,
                 );
                 default_responds_to
@@ -225,7 +213,7 @@ impl AIDolly {
             .unwrap_or_else(|_| {
                 logger.warning(
                     "RESPOND_TO_ALL_MESSAGES has not been set in the environment. Defaulting to 'false'",
-                    function_name,
+
                     Severity::Low,
                 );
                 "false".to_string()
@@ -274,17 +262,15 @@ impl AIDolly {
     ///
     /// `conversation` - The whole conversation with OllamaMessages
     fn save_conversation(&self, conversation: Conversation) {
-        let function_name = "save_conversation";
-
         // Define the directory path.
         let dir_path = Path::new(&self.out_dir);
 
         // Create the directory if it doesn't exist.
-        if !dir_path.exists() {
-            if let Err(e) = fs::create_dir_all(dir_path) {
-                eprintln!("Failed to create directory: {}", e);
-                return;
-            }
+        if !dir_path.exists()
+            && let Err(e) = fs::create_dir_all(dir_path)
+        {
+            eprintln!("Failed to create directory: {}", e);
+            return;
         }
 
         // Overwrite file
@@ -300,12 +286,11 @@ impl AIDolly {
         match file {
             Ok(mut f) => {
                 let _ = f.write_all(json_string.as_bytes());
-                self.logger.info("Saved conversation", function_name);
+                self.logger.info("Saved conversation");
                 drop(f)
             }
             Err(e) => self.logger.error(
                 format!("Could not save conversation: '{}'", e).as_str(),
-                function_name,
                 Severity::High,
             ),
         }
@@ -313,24 +298,19 @@ impl AIDolly {
 
     /// This function will load the whole conversation from the json file
     fn load_conversation(&self) -> Conversation {
-        let function_name = "load_conversation";
-
         let dir_path = Path::new(&self.out_dir);
 
         let conversation_file = dir_path.join(self.conversation_file.clone());
 
-        self.logger.debug(
-            format!("{:?}", conversation_file.as_os_str()).as_str(),
-            function_name,
-        );
+        self.logger
+            .debug(format!("{:?}", conversation_file.as_os_str()).as_str());
 
         let content = read_to_string(&conversation_file);
 
         match content {
             Ok(content) => {
                 let conversation: Conversation = serde_json::from_str(content.as_str()).unwrap();
-                self.logger
-                    .debug(format!("{:#?}", conversation).as_str(), function_name);
+                self.logger.debug(format!("{:#?}", conversation).as_str());
                 return conversation;
             }
             Err(_) => self.logger.warning(
@@ -339,7 +319,6 @@ impl AIDolly {
                     conversation_file.into_os_string().into_string().unwrap(),
                 )
                 .as_str(),
-                function_name,
                 Severity::None,
             ),
         }
@@ -351,12 +330,11 @@ impl AIDolly {
 
     /// This function will read the system message from system_message.txt
     fn read_system_message(&self) -> String {
-        let function_name = "read_system_message";
         let system_message = read_to_string("system_message.txt");
 
         match system_message {
             Ok(message) => {
-                self.logger.debug(message.as_str(), function_name);
+                self.logger.debug(message.as_str());
                 message
             }
             Err(_) => {
@@ -369,11 +347,10 @@ impl AIDolly {
                     Err(_) => {
                         self.logger.warning(
                             "No system message found. Please create 'system_message.txt' using 'system_message_example.txt' as a backup",
-                            "read_system_message",
                             Severity::High,
                         );
                         let system_message = read_to_string("system_message_example.txt").unwrap();
-                        self.logger.debug(system_message.as_str(), function_name);
+                        self.logger.debug(system_message.as_str());
                         system_message
                     }
                 }
@@ -382,10 +359,8 @@ impl AIDolly {
     }
 
     async fn get_llm_message_based_on_settings(&self, llm_body: LlmBody) -> LlmResponse {
-        let function_name = "get_llm_message_based_on_settings";
-
         if self.priortize_ollama {
-            self.logger.info("Using Ollama to respond", function_name);
+            self.logger.info("Using Ollama to respond");
             let ollama_response = Ollama::get_message(
                 MessageRequest::WithUrl {
                     url: self.ollama_base_url.clone(),
@@ -414,7 +389,7 @@ impl AIDolly {
                 return self.get_openai_response(llm_body).await;
             }
 
-            self.logger.info("Using Ollama to respond", function_name);
+            self.logger.info("Using Ollama to respond");
             Ollama::get_message(
                 MessageRequest::WithUrl {
                     url: self.ollama_base_url.clone(),
@@ -428,8 +403,7 @@ impl AIDolly {
 
     // Helper function for Cohere
     async fn get_cohere_response(&self, mut llm_body: LlmBody) -> LlmResponse {
-        let function_name = "get_cohere_response";
-        self.logger.info("Using Cohere to respond", function_name);
+        self.logger.info("Using Cohere to respond");
         llm_body.model = self.cohere_model.clone();
         Cohere::get_message(
             MessageRequest::WithToken {
@@ -443,8 +417,7 @@ impl AIDolly {
 
     // Helper function for OpenAI
     async fn get_openai_response(&self, mut llm_body: LlmBody) -> LlmResponse {
-        let function_name = "get_openai_response";
-        self.logger.info("Using OpenAI to respond", function_name);
+        self.logger.info("Using OpenAI to respond");
         llm_body.model = self.openai_model.clone();
         OpenAI::get_message(
             MessageRequest::WithToken {
@@ -458,8 +431,6 @@ impl AIDolly {
 
     /// This function will format the prompt like: `role: message`
     fn format_into_prompt(&self, conversation: Conversation) -> Vec<LlmMessage> {
-        let function_name = "format_into_prompt";
-
         let mut messages: Vec<LlmMessage> = Vec::new();
 
         let system_message = LlmMessage {
@@ -471,10 +442,8 @@ impl AIDolly {
 
         for message in conversation.messages {
             messages.push(message.clone());
-            self.logger.debug(
-                format!("{}: {}", message.role, message.content).as_str(),
-                function_name,
-            );
+            self.logger
+                .debug(format!("{}: {}", message.role, message.content).as_str());
         }
 
         messages
@@ -509,11 +478,9 @@ impl AIDolly {
     ///
     /// * `msg` - The original Discord message
     async fn get_llm_message(&self, msg: &Message) -> String {
-        let function_name = "get_ollama_message";
-
         if self.ollama_base_url.is_empty() {
             self.logger
-                .error("Ollama url has not been set", function_name, Severity::High);
+                .error("Ollama url has not been set", Severity::High);
             return "Something went wrong 😭".to_string();
         }
 
@@ -541,8 +508,7 @@ impl AIDolly {
         self.save_conversation(conversation);
         let response = self.crop_string(&ollama_response.message.content, 1950);
 
-        self.logger
-            .debug(format!("Reponse: {}", response).as_str(), function_name);
+        self.logger.debug(format!("Reponse: {}", response).as_str());
         response
     }
 
@@ -594,19 +560,16 @@ impl AIDolly {
 
     /// Clears the conversation by removing the conversation json file
     pub fn clear_conversation(&self) -> bool {
-        let function_name = "clear_conversation";
         let dir_path = Path::new(&self.out_dir);
 
         let conversation_file = dir_path.join(self.conversation_file.clone());
 
-        self.logger.debug(
-            format!("{:?}", conversation_file.as_os_str()).as_str(),
-            function_name,
-        );
+        self.logger
+            .debug(format!("{:?}", conversation_file.as_os_str()).as_str());
 
         if !conversation_file.exists() {
             self.logger
-                .warning("No conversation to delete.", function_name, Severity::Low);
+                .warning("No conversation to delete.", Severity::Low);
             return true;
         }
 
@@ -614,14 +577,12 @@ impl AIDolly {
 
         match result {
             Ok(_) => {
-                self.logger
-                    .info("Successfully cleared conversation", function_name);
+                self.logger.info("Successfully cleared conversation");
                 true
             }
             Err(why) => {
                 self.logger.error(
                     format!("Could not delete conversation: {}", why).as_str(),
-                    function_name,
                     Severity::Medium,
                 );
                 false
@@ -639,15 +600,12 @@ impl MessageHandler for AIDolly {
     /// * `ctx` - The context from where the message is from.
     /// * `msg` - The message that has been received.
     async fn respond(&self, ctx: &Context, msg: &Message) -> bool {
-        let function_name = "respond";
         let bot_id = &ctx.cache.current_user().id.to_string();
 
         let message = msg.content.to_lowercase();
 
-        self.logger.debug(
-            format!("The message was formatted: {}", message).as_str(),
-            function_name,
-        );
+        self.logger
+            .debug(format!("The message was formatted: {}", message).as_str());
 
         // Respond if responding to all messages is on.
         // Respond if the message contains the input from the RESPONDS_TO environment
@@ -656,7 +614,7 @@ impl MessageHandler for AIDolly {
             || self.contains_names(message.clone())
             || message.contains(bot_id)
         {
-            self.logger.info("Using ollama to respond", function_name);
+            self.logger.info("Using ollama to respond");
             match msg
                 .channel_id
                 .say(&ctx.http, self.get_llm_message(msg).await)
@@ -666,7 +624,6 @@ impl MessageHandler for AIDolly {
                 Err(why) => {
                     self.logger.error(
                         format!("Error sending message: {why:?}").as_str(),
-                        function_name,
                         Severity::High,
                     );
                     return false;

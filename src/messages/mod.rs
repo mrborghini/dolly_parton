@@ -6,7 +6,6 @@ pub mod message_handler;
 pub mod ollama;
 pub mod openai;
 pub mod ping;
-
 pub use ai_dolly::*;
 pub use cohere::*;
 pub use insult::*;

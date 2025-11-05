@@ -1,8 +1,7 @@
-use std::{env, fs};
-
 use serenity::all::{CommandOptionType, CreateCommandOption, ResolvedValue};
 use serenity::builder::CreateCommand;
 use serenity::model::application::ResolvedOption;
+use std::{env, fs};
 
 fn write_system_prompt(prompt: String) -> Result<(), std::io::Error> {
     fs::write("system_message.txt", prompt)
@@ -19,10 +18,10 @@ pub fn run(options: &[ResolvedOption]) -> String {
     let mut prompt = String::new();
 
     for option in options {
-        if option.name == "prompt" {
-            if let ResolvedValue::String(value) = &option.value {
-                prompt = value.to_string();
-            }
+        if option.name == "prompt"
+            && let ResolvedValue::String(value) = &option.value
+        {
+            prompt = value.to_string();
         }
     }
 

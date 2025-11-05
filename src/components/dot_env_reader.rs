@@ -1,6 +1,5 @@
-use super::Logger;
+use rust_logger::Logger;
 use std::{collections::HashMap, env, fs::read_to_string};
-
 pub struct DotEnvReader {
     logger: Logger,
     file_name: String,
@@ -15,32 +14,26 @@ impl DotEnvReader {
     }
 
     pub fn parse_and_set_env(&self) {
-        let func_name = "parse_and_set_env";
-
         // Read the file content
         let file_content = self.read_file_content();
-        self.logger.debug(
-            format!("Read file: {}", self.file_name.clone()).as_str(),
-            func_name,
-        );
+        self.logger
+            .debug(format!("Read file: {}", self.file_name.clone()).as_str());
 
         // Parse the file content into a HashMap of key-value pairs
         let env_vars = self.parse_lines(file_content);
-        self.logger.debug("Parsed variables", func_name);
+        self.logger.debug("Parsed variables");
 
         // Set environment variables
         self.set_env_vars(env_vars);
-        self.logger.debug("Set enviroment variables", func_name)
+        self.logger.debug("Set enviroment variables")
     }
 
     fn read_file_content(&self) -> String {
         match read_to_string(&self.file_name) {
             Ok(content) => content,
             Err(e) => {
-                self.logger.debug(
-                    format!("Failed to read file: {}", e).as_str(),
-                    "read_file_content",
-                );
+                self.logger
+                    .debug(format!("Failed to read file: {}", e).as_str());
                 "".to_string()
             }
         }
@@ -48,8 +41,6 @@ impl DotEnvReader {
 
     fn parse_lines(&self, content: String) -> HashMap<String, String> {
         let mut env_vars = HashMap::new();
-        let func_name = "parse_lines";
-
         for line in content.lines() {
             let split_line: Vec<&str> = line.split("#").collect();
             let trimmed_line = split_line[0].trim();
@@ -64,10 +55,8 @@ impl DotEnvReader {
                     continue;
                 }
 
-                self.logger.debug(
-                    format!("Parsed key-value pair: {}={}", key, value).as_str(),
-                    func_name,
-                );
+                self.logger
+                    .debug(format!("Parsed key-value pair: {}={}", key, value).as_str());
                 env_vars.insert(key, value);
             }
         }
@@ -83,20 +72,15 @@ impl DotEnvReader {
     }
 
     fn set_env_vars(&self, env_vars: HashMap<String, String>) {
-        let func_name = "set_env_vars";
-
         for (key, value) in env_vars {
             // Check if the environment variable is already set
             if env::var(&key).is_ok() {
                 self.logger.debug(
                     format!("Environment variable {} is already set, skipping.", key).as_str(),
-                    func_name,
                 );
             } else {
-                self.logger.debug(
-                    format!("Setting environment variable: {}={}", key, value).as_str(),
-                    func_name,
-                );
+                self.logger
+                    .debug(format!("Setting environment variable: {}={}", key, value).as_str());
                 unsafe {
                     env::set_var(&key, &value);
                 }

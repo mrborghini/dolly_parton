@@ -1,11 +1,8 @@
-use std::{env, time::Duration};
-
+use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
+use rust_logger::{Logger, Severity};
 use serde::Serialize;
 use serenity::async_trait;
-
-use crate::components::{Logger, types::Severity};
-
-use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
+use std::{env, time::Duration};
 
 #[derive(Serialize)]
 struct OllamaBody {
@@ -25,8 +22,6 @@ pub struct Ollama;
 #[async_trait]
 impl LlmProvider for Ollama {
     async fn get_message(request: MessageRequest, logger: Logger) -> LlmResponse {
-        let function_name = "get_message";
-
         match request {
             MessageRequest::WithUrl { llm_body, url } => {
                 // Check if ollama is online by using the / path
@@ -50,10 +45,7 @@ impl LlmProvider for Ollama {
 
                 let num_ctx: i32 = env::var("NUM_CTX").unwrap().parse().unwrap_or(2048);
 
-                logger.debug(
-                    format!("Using {} context window", num_ctx).as_str(),
-                    function_name,
-                );
+                logger.debug(format!("Using {} context window", num_ctx).as_str());
 
                 let ollama_body = OllamaBody {
                     model: llm_body.model,
@@ -79,7 +71,6 @@ impl LlmProvider for Ollama {
                             Err(why) => {
                                 logger.error(
                                     format!("Could not get Ollama response: {}", why).as_str(),
-                                    function_name,
                                     Severity::High,
                                 );
                                 LlmResponse {

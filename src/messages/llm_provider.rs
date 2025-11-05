@@ -1,8 +1,6 @@
-use serenity::async_trait;
-
-use crate::components::Logger;
-
 use super::{LlmBody, LlmResponse};
+use rust_logger::Logger;
+use serenity::async_trait;
 
 pub enum MessageRequest {
     WithUrl { llm_body: LlmBody, url: String },

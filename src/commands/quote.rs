@@ -1,10 +1,8 @@
 use reqwest::Client;
+use rust_logger::{Logger, Severity};
 use serde::Deserialize;
 use serenity::builder::CreateCommand;
 use serenity::model::application::ResolvedOption;
-
-use crate::components::Logger;
-use crate::components::types::Severity;
 
 #[derive(Debug, Deserialize)]
 struct ReceivedQuote {
@@ -29,14 +27,11 @@ async fn get_quote() -> Result<String, reqwest::Error> {
 }
 
 pub async fn run(logger: Logger, _options: &[ResolvedOption<'_>]) -> String {
-    let function_name = "run";
-
     match get_quote().await {
         Ok(quote) => quote,
         Err(e) => {
             logger.error(
                 format!("Could not get quote: {}", e).as_str(),
-                function_name,
                 Severity::High,
             );
             "Something went wrong 😭".to_string()

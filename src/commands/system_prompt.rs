@@ -1,7 +1,6 @@
-use std::fs::read_to_string;
-
 use serenity::builder::CreateCommand;
 use serenity::model::application::ResolvedOption;
+use std::fs::read_to_string;
 
 struct CroppedString {
     pub content: String,

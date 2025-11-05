@@ -1,13 +1,11 @@
-// custom components
 mod commands;
 mod components;
 mod messages;
+use crate::commands::{change_system_prompt, system_prompt};
 use commands::{clear_converstation, ping, quote, rage, version};
-use components::types::Severity;
-use components::{DotEnvReader, Logger};
+use components::DotEnvReader;
 use messages::{AIDolly, Insult, MessageHandler, Ping};
-
-// Cargo components
+use rust_logger::{Logger, Severity};
 use serenity::async_trait;
 use serenity::builder::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::model::application::{Command, Interaction};
@@ -19,8 +17,6 @@ use std::env;
 use tokio::select;
 use tokio::signal;
 
-use crate::commands::{change_system_prompt, system_prompt};
-
 struct Handler {
     logger: Logger,
     message_handlers: Vec<Box<dyn MessageHandler + Send + Sync>>,
@@ -29,16 +25,12 @@ struct Handler {
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
-        let function_name = "message";
         // Prevent the bot responding to it self
         if ctx.cache.current_user().id == msg.author.id {
             return;
         }
 
-        self.logger.info(
-            format!("Received: {}", msg.content),
-            function_name.to_string(),
-        );
+        self.logger.info(format!("Received: {}", msg.content));
 
         for handler in self.message_handlers.iter() {
             if handler.respond(&ctx, &msg).await {
@@ -48,13 +40,9 @@ impl EventHandler for Handler {
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        let function_name = "interaction_create";
-
         if let Interaction::Command(command) = interaction {
-            self.logger.debug(
-                format!("Received command interaction: {command:#?}").as_str(),
-                function_name,
-            );
+            self.logger
+                .debug(format!("Received command interaction: {command:#?}").as_str());
 
             let content = match command.data.name.as_str() {
                 "ping" => Some(commands::ping::run(&command.data.options())),
@@ -74,7 +62,6 @@ impl EventHandler for Handler {
                 _ => {
                     self.logger.warning(
                         format!("Invalid command: {}", command.data.name.as_str()).as_str(),
-                        function_name,
                         Severity::Medium,
                     );
                     Some("not implemented :(".to_string())
@@ -88,7 +75,6 @@ impl EventHandler for Handler {
                 if let Err(why) = command.create_response(&ctx.http, builder).await {
                     self.logger.error(
                         format!("Cannot respond to slash command: {why}").as_str(),
-                        function_name,
                         Severity::High,
                     );
                 }
@@ -97,12 +83,8 @@ impl EventHandler for Handler {
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
-        let function_name = "ready";
-
-        self.logger.info(
-            format!("{} is connected!", ready.user.name).as_str(),
-            function_name,
-        );
+        self.logger
+            .info(format!("{} is connected!", ready.user.name).as_str());
 
         let guild_id = match env::var("GUILD_ID") {
             Ok(value) => {
@@ -111,7 +93,6 @@ impl EventHandler for Handler {
                     Err(_) => {
                         self.logger.warning(
                             "GUILD_ID is not a valid number. Defaulting to '0'",
-                            function_name,
                             Severity::Medium,
                         );
                         GuildId::new(0) // Default to 0 if parsing fails
@@ -119,10 +100,8 @@ impl EventHandler for Handler {
                 }
             }
             Err(_) => {
-                self.logger.debug(
-                    "GUILD_ID has not been set in the environment. Defaulting to '0'",
-                    function_name,
-                );
+                self.logger
+                    .debug("GUILD_ID has not been set in the environment. Defaulting to '0'");
                 GuildId::new(0) // Default to 0 if the environment variable is not set
             }
         };
@@ -147,7 +126,6 @@ impl EventHandler for Handler {
 
             self.logger.debug(
                 format!("I now have the following guild slash commands: {commands:#?}").as_str(),
-                function_name,
             );
         }
 
@@ -166,7 +144,6 @@ impl EventHandler for Handler {
             self.logger.debug(
                 format!("I created the following global slash command: {global_command:#?}")
                     .as_str(),
-                function_name,
             );
         }
     }
@@ -177,17 +154,12 @@ async fn main() {
     let dotenv = DotEnvReader::new(".env");
     dotenv.parse_and_set_env();
 
-    let function_name = "main";
     let logger = Logger::new("Main");
-    logger.info("Starting up", function_name);
+    logger.info("Starting up");
 
     // Handle .env
     let token = env::var("DISCORD_TOKEN").unwrap_or_else(|_| {
-        logger.error(
-            "DISCORD_TOKEN not found in environment",
-            function_name,
-            Severity::Critical,
-        );
+        logger.error("DISCORD_TOKEN not found in environment", Severity::Critical);
         std::process::exit(1);
     });
 
@@ -232,25 +204,25 @@ async fn main() {
     #[cfg(unix)]
     select! {
         _ = client_start_future => {
-            logger.info("Client has shut down.", function_name);
+            logger.info("Client has shut down.");
         },
         _ = ctrl_c_future => {
-            logger.info("Ctrl-C has been pressed, shutting down...", function_name);
+            logger.info("Ctrl-C has been pressed, shutting down...");
         },
         _ = sigterm_future => {
-            logger.info("SIGTERM received, shutting down...", function_name);
+            logger.info("SIGTERM received, shutting down...");
         },
     }
 
     #[cfg(not(unix))]
     select! {
         _ = client_start_future => {
-            logger.info("Client has shut down.", function_name);
+            logger.info("Client has shut down.");
         },
         _ = ctrl_c_future => {
-            logger.info("Ctrl-C has been pressed, shutting down...", function_name);
+            logger.info("Ctrl-C has been pressed, shutting down...");
         },
     }
 
-    logger.info("Application shutting down gracefully.", function_name);
+    logger.info("Application shutting down gracefully.");
 }

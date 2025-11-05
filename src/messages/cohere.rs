@@ -1,9 +1,7 @@
+use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
+use rust_logger::{Logger, Severity};
 use serde::Deserialize;
 use serenity::async_trait;
-
-use crate::components::{Logger, types::Severity};
-
-use super::{LlmMessage, LlmProvider, LlmResponse, MessageRequest};
 
 pub struct Cohere;
 
@@ -26,8 +24,6 @@ struct CohereText {
 #[async_trait]
 impl LlmProvider for Cohere {
     async fn get_message(request: MessageRequest, logger: Logger) -> LlmResponse {
-        let function_name = "get_message";
-
         match request {
             MessageRequest::WithUrl {
                 llm_body: _,
@@ -60,11 +56,7 @@ impl LlmProvider for Cohere {
                                 let content = cohere_response.message.content;
 
                                 if content.is_empty() {
-                                    logger.error(
-                                        "Could not get content",
-                                        function_name,
-                                        Severity::High,
-                                    );
+                                    logger.error("Could not get content", Severity::High);
                                     return LlmResponse {
                                         message: LlmMessage {
                                             content: content[0].text.as_str().to_string(),
@@ -83,7 +75,6 @@ impl LlmProvider for Cohere {
                             Err(why) => {
                                 logger.error(
                                     format!("Could not parse Cohere response: {}", why).as_str(),
-                                    function_name,
                                     Severity::High,
                                 );
                                 LlmResponse {
