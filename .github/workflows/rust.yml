@@ -70,7 +70,7 @@ jobs:
       run: rustup target add ${{ env.TARGET_COMPILER }}
 
     - name: Install build dependencies
-      run: sudo apt install gcc-aarch64-linux-gnu -y
+      run: sudo apt update && sudo apt install gcc-aarch64-linux-gnu -y
 
     - name: Setup vendored openssl
       run: cargo add openssl -F vendored
@@ -105,7 +105,7 @@ jobs:
       run: rustup target add ${{ env.TARGET_COMPILER }}
 
     - name: Install build dependencies
-      run: sudo apt install musl-tools -y
+      run: sudo apt update && sudo apt install musl-tools -y
 
     - name: Setup vendored openssl
       run: cargo add openssl -F vendored
@@ -211,7 +211,7 @@ jobs:
         echo "WINDOWS_AARCH64_PATH=${EXECUTABLE_NAME}-aarch64-Windows.exe" >> $GITHUB_ENV
 
     - name: Install github CLI
-      run: sudo apt install gh -y
+      run: sudo apt update && sudo apt install gh -y
     
     - name: Download Linux x86_64 Artifact
       uses: actions/download-artifact@v4
