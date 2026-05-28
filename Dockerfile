@@ -5,7 +5,7 @@ ARG APP_NAME
 WORKDIR /app
 
 # Install host build dependencies.
-RUN apk add --no-cache clang lld musl-dev git pkgconf libressl-dev
+RUN apk add --no-cache clang lld musl-dev git pkgconf openssl-dev openssl-libs-static
 
 COPY . .
 
